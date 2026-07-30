@@ -209,14 +209,7 @@ thead th{
   font-weight:600;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
   color:var(--graphite-2);border-bottom:1.5px solid var(--graphite);
 }
-tbody tr{cursor:pointer}
-tbody tr:hover{background:rgba(255,255,255,.045)}
 tbody td:last-child{color:var(--accent)}
-tbody tr[data-hl="1"]{background:rgba(196,229,56,.07)}
-tbody tr[data-hl="1"] td{font-weight:600;color:var(--accent)}
-tbody tr[data-sel="1"]{background:rgba(45,212,191,.13)}
-tbody tr[data-sel="1"] td{font-weight:600}
-tbody tr[data-hl="1"][data-sel="1"]{background:linear-gradient(90deg,rgba(196,229,56,.07),rgba(45,212,191,.13))}
 td.num{font-variant-numeric:tabular-nums}
 tfoot td{border-bottom:0;border-top:1.5px solid var(--graphite);font-weight:600}
 
@@ -486,14 +479,14 @@ button,input{font:inherit}
   margin:6px 0 2px;font-family:"Barlow Condensed",sans-serif;font-size:clamp(48px,14vw,72px);line-height:.88;
   color:#F7FAFC;text-shadow:0 0 22px rgba(62,213,127,.10);letter-spacing:-.015em;
 }
-.hl-note{max-width:74%;margin-top:8px;color:rgba(230,239,244,.74);font-size:10px;line-height:1.55;text-transform:uppercase}
+.hl-note{max-width:100%;white-space:nowrap;margin-top:8px;color:rgba(230,239,244,.74);font-size:10px;line-height:1.55;text-transform:uppercase}
 .hero-years{
   margin-top:13px;display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:999px;
   border:1px solid rgba(109,151,176,.34);background:rgba(4,14,23,.66);backdrop-filter:blur(12px);
   color:#EAF4F9;font-family:"IBM Plex Mono",monospace;font-size:10px;
 }
 .hero-years svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.body{display:block;padding:14px 14px calc(var(--nav-h) + 22px);background:transparent}
+.body{display:block;padding:14px 6px calc(var(--nav-h) + 22px);background:transparent}
 .results{display:flex;flex-direction:column;gap:12px;padding:0;background:transparent}
 .results > .dimwrap{order:1}.results > .leg{order:2}.results > .pace{order:3}.results > .inc{order:4}.results > .tbl-wrap{order:6}.results > .activity-card{order:7}
 .dimwrap,.leg,.pace,.inc,.tbl-wrap,.activity-card{
@@ -501,12 +494,12 @@ button,input{font:inherit}
   background:linear-gradient(180deg,rgba(8,20,30,.97),rgba(4,13,21,.99))!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.018),0 14px 38px rgba(0,0,0,.18);
 }
-.dimwrap{padding:16px 14px 8px;border-radius:22px 22px 0 0;border-bottom:0}
+.dimwrap{padding:16px 8px 8px;border-radius:22px 22px 0 0;border-bottom:0}
 .dimcap{display:flex;flex-direction:column;gap:4px;margin:0 0 12px;color:#F4F8FA;font-family:"IBM Plex Sans",sans-serif;font-size:16px;letter-spacing:-.01em;text-transform:none;font-weight:600}
 .dimcap small{color:var(--graphite-2);font-size:11px;font-weight:400;letter-spacing:0}
 .iso3d{height:330px;border:0;border-radius:16px;background:radial-gradient(600px 250px at 70% 45%,rgba(35,216,133,.05),transparent 60%),#030B12;box-shadow:inset 0 0 0 1px rgba(71,113,138,.20);overflow:hidden}
-.leg{margin-top:-12px;padding:15px 14px 16px;border-radius:0 0 22px 22px;border-top:0;gap:7px 15px}
-.leg-i{font-size:9px;color:#C9D5DB}.leg-s{width:12px;height:7px;border-radius:2px;border:0;box-shadow:0 0 8px currentColor}
+.leg{margin-top:-12px;padding:15px 8px 16px;border-radius:0 0 22px 22px;border-top:0;gap:6px 8px;flex-wrap:nowrap;justify-content:space-between}
+.leg-i{font-size:8.5px;gap:4px;color:#C9D5DB}.leg-s{width:9px;height:6px;border-radius:2px;border:0;box-shadow:0 0 8px currentColor}
 .pace{padding:16px;border-radius:20px;display:grid;grid-template-columns:112px 1fr;gap:14px;align-items:center}
 .pace-gauge-wrap{width:112px}.pace-v{font-size:13px;bottom:1px}.pace-body{min-width:0}
 .pace-k{font-family:"IBM Plex Sans",sans-serif;font-size:15px;letter-spacing:-.01em;text-transform:none;color:#F4F8FA;font-weight:600}
@@ -560,7 +553,7 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
   body::after{border-radius:38px;box-shadow:0 0 0 100vmax #000,inset 0 0 0 1px rgba(255,255,255,.035),inset 0 0 28px rgba(0,0,0,.28)}
 }
 @media (max-width:390px){
-  .titleblock{min-height:282px}.tb-meta{right:12px;top:13px}.tb-cell{min-width:52px;padding:7px 6px}.headline{left:16px;right:16px;bottom:19px}.hl-v{font-size:50px}.hl-note{max-width:82%}.body{padding-left:10px;padding-right:10px}.iso3d{height:305px}.pace{grid-template-columns:96px 1fr}.pace-gauge-wrap{width:96px}.nav-item span{font-size:7px}.appbar{padding-left:12px;padding-right:12px}.appbar-copy strong{font-size:16px}
+  .titleblock{min-height:282px}.tb-meta{right:12px;top:13px}.tb-cell{min-width:52px;padding:7px 6px}.headline{left:16px;right:16px;bottom:19px}.hl-v{font-size:50px}.hl-note{max-width:100%;font-size:9px}.body{padding-left:6px;padding-right:6px}.iso3d{height:305px}.pace{grid-template-columns:96px 1fr}.pace-gauge-wrap{width:96px}.nav-item span{font-size:7px}.appbar{padding-left:12px;padding-right:12px}.appbar-copy strong{font-size:16px}
 }
 </style>
 </head>
@@ -570,11 +563,11 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <button aria-label="Open retirement inputs" class="appbar-btn" id="open-inputs" type="button">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
 </button>
-<div class="appbar-copy"><strong>Retirement Tracker</strong><span>Plan today. Live tomorrow.</span></div>
+<div class="appbar-copy"><strong>Retirement Tracker</strong><span>Plan Today. Live Tomorrow.</span></div>
 </header><div class="titleblock">
 <div class="tb-main">
 
-<h1 class="tb-title">RETIREMENT OUTLOOK</h1><div class="tb-sub">Your projected destination</div>
+<h1 class="tb-title">RETIREMENT OUTLOOK</h1><div class="tb-sub">Your Projected Destination</div>
 </div>
 <div class="tb-meta">
 <div class="tb-cell"><span class="tb-k">Retire</span><span class="tb-v" id="m-year">2042</span></div>
@@ -740,7 +733,7 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <div class="dimwrap" id="projections">
 <div class="dimcap" id="dimcap"><span>Projected Portfolio Value</span><small id="projection-range">Portfolio growth &amp; composition</small></div>
 <div class="iso3d" id="iso3d">
-<svg aria-labelledby="isotitle" id="isosvg" role="img"><title id="isotitle">Isometric 3D chart of account balances growing year by year</title></svg>
+<svg aria-labelledby="isotitle" id="isosvg" preserveAspectRatio="none" role="img"><title id="isotitle">Isometric 3D chart of account balances growing year by year</title></svg>
 </div>
 </div>
 <div class="leg" id="leg"></div>
@@ -750,7 +743,7 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 </div>
 <div class="tbl-wrap" id="milestones">
 <table>
-<caption>Balances by milestone age</caption>
+<caption>Balances By Milestone Age</caption>
 <thead>
 <tr>
 <th scope="col">Age / year</th>
@@ -1006,9 +999,9 @@ function render(){
   $("m-year").textContent = retireYearInt;
   $("m-age").textContent  = retireAge;
   $("m-ret").textContent  = S.rate.toFixed(1) + "%";
-  const yearsToRetire = Math.max(0, retireYearInt - BASE_YEAR);
+  const yearsToRetire = Math.max(0, S.retire - BASE_YEAR);
   const heroYears = $("hero-years");
-  if (heroYears) heroYears.textContent = `In ${yearsToRetire} year${yearsToRetire === 1 ? "" : "s"}`;
+  if (heroYears) heroYears.textContent = `${yearsToRetire.toFixed(2)} Years Remaining`;
 
   $("hl-total").textContent = money(atRetire.total);
   const totalContrib = Object.values(contribTotals).reduce((a,c)=>a+c,0);
@@ -1060,7 +1053,7 @@ function sampleCR(vals, t){
 function drawTerrain(snap, retireAge, atRetire){
   const svg = $("isosvg");
   if (!svg) return;
-  const W = Math.max(360, svg.clientWidth || 700), H = 400;
+  const W = Math.max(280, svg.clientWidth || 700), H = 400;
   const NS = "http://www.w3.org/2000/svg";
   const cs = getComputedStyle(document.documentElement);
   const ink   = cs.getPropertyValue("--graphite").trim()   || "#E2ECF1";
@@ -1131,6 +1124,8 @@ function drawTerrain(snap, retireAge, atRetire){
 
   /* ---- ridges, back to front ---- */
   const peakLabels = [];   // collected now, positioned+drawn after the loop so they can't overlap
+  const crestLines = [];   // crest paths, drawn in a pass after every ridge's occlusion body so a
+                            // ridge that crosses above a nearer one stays visible, not hidden behind it
   for (let j=0; j<nL; j++){
     const m = ACCOUNTS[j];
     const vals = ages.map(a => snap[a][m.k]);
@@ -1171,10 +1166,8 @@ function drawTerrain(snap, retireAge, atRetire){
     svg.appendChild(el("path", {d:comb, fill:"none", stroke:`url(#${gid})`, "stroke-width":0.9,
       "stroke-dasharray":"0.6 3.4", "stroke-opacity":0.5}));
 
-    // three-pass crest: wide bloom, tight bloom, then a crisp hairline on top
-    svg.appendChild(el("path", {d:crest, fill:"none", stroke:m.fill, "stroke-width":6, "stroke-opacity":0.16, filter:"url(#tGlowWide)"}));
-    svg.appendChild(el("path", {d:crest, fill:"none", stroke:m.fill, "stroke-width":2.4, "stroke-opacity":0.42, filter:"url(#tGlow)"}));
-    svg.appendChild(el("path", {d:crest, fill:"none", stroke:shade(m.fill,38), "stroke-width":1.1, "stroke-opacity":0.98}));
+    // three-pass crest (wide bloom, tight bloom, crisp hairline) - deferred, see crestLines below
+    crestLines.push({ crest, fill: m.fill });
 
     const tag = el("text", {x:(x0+3).toFixed(1), y:(base-4).toFixed(1),
       "font-family":"IBM Plex Mono, monospace", "font-size":"7.5", "letter-spacing":"0.09em",
@@ -1187,6 +1180,15 @@ function drawTerrain(snap, retireAge, atRetire){
     // positions get de-conflicted in one pass below instead of drawn blind.
     peakLabels.push({ y: crestEndY - 6, text: moneyK(vals[last]), color: shade(m.fill, 30) });
   }
+
+  // draw every ridge's crest line only after ALL occlusion bodies are down, so a
+  // ridge that crosses above a nearer one (e.g. Your Roth over SEP IRA near the
+  // right edge) stays visible instead of being hidden by the nearer ridge's fill
+  crestLines.forEach(({crest, fill}) => {
+    svg.appendChild(el("path", {d:crest, fill:"none", stroke:fill, "stroke-width":6, "stroke-opacity":0.16, filter:"url(#tGlowWide)"}));
+    svg.appendChild(el("path", {d:crest, fill:"none", stroke:fill, "stroke-width":2.4, "stroke-opacity":0.42, filter:"url(#tGlow)"}));
+    svg.appendChild(el("path", {d:crest, fill:"none", stroke:shade(fill,38), "stroke-width":1.1, "stroke-opacity":0.98}));
+  });
 
   // de-overlap the collected peak labels, then draw each with a solid chip
   // behind it so it reads clearly against the bright lines instead of cutting into them
@@ -1228,7 +1230,7 @@ function drawTerrain(snap, retireAge, atRetire){
   /* ---- header readouts ---- */
   const cap = $("dimcap");
   const rangeLabel = $("projection-range");
-  if (rangeLabel) rangeLabel.textContent = `${yearOf(ages[0])} to ${yearOf(ages[last])} · account growth & composition`;
+  if (rangeLabel) rangeLabel.textContent = `${yearOf(ages[0])} To ${yearOf(ages[last])} · Account Growth & Composition`;
   else if (cap) cap.textContent = `Projected Portfolio Value — ${yearOf(ages[0])} to ${yearOf(ages[last])}`;
 
   const tax = atRetire.wroth + atRetire.droth;
@@ -1237,7 +1239,7 @@ function drawTerrain(snap, retireAge, atRetire){
   taxLbl.textContent = `TAX-FREE ${moneyK(tax)} (${Math.round(tax/(atRetire.total||1)*100)}%)`;
   svg.appendChild(taxLbl);
 
-  const totalLbl = el("text", {x:xR, y:19, "text-anchor":"end",
+  const totalLbl = el("text", {x:W-4, y:19, "text-anchor":"end",
     "font-family":"Barlow Condensed, sans-serif","font-size":"18","font-weight":"700", fill:ink});
   totalLbl.textContent = moneyK(atRetire.total);
   svg.appendChild(totalLbl);
@@ -1332,26 +1334,15 @@ function drawIncome(a, retireAge, retireMonth, retireYearInt){
     `<div class="inc-c" data-tot="1"><div class="inc-k">Total / month</div><div class="inc-v">${money(total)}</div></div>`;
 }
 
-const selectedAges = new Set();   // rows the user has clicked to highlight, kept across redraws
-
 function drawTable(snap, retireAge){
   const milestones = []; for (let a=62; a<=70; a++) milestones.push(a);
   const ages = [...new Set([retireAge, ...milestones])].filter(a => snap[a]).sort((x,y)=>x-y);
   $("tbody").innerHTML = ages.map(age => {
     const d = snap[age];
-    const hl = age === retireAge ? ' data-hl="1"' : '';
-    const sel = selectedAges.has(age) ? ' data-sel="1"' : '';
-    return `<tr${hl}${sel} data-age="${age}"><td>${age} · ${d.year}</td>` +
+    return `<tr data-age="${age}"><td>${age} · ${d.year}</td>` +
       ACCOUNTS.map(m=>`<td class="num">${moneyK(d[m.k])}</td>`).join("") +
       `<td class="num">${moneyK(d.total)}</td></tr>`;
   }).join("");
-  $("tbody").querySelectorAll("tr").forEach(tr => {
-    tr.addEventListener("click", () => {
-      const age = Number(tr.dataset.age);
-      if (selectedAges.has(age)) { selectedAges.delete(age); tr.removeAttribute("data-sel"); }
-      else { selectedAges.add(age); tr.setAttribute("data-sel", "1"); }
-    });
-  });
 }
 
 /* ---------- controls ---------- */
