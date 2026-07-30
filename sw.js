@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v2";
+const CACHE = "retirement-tracker-v4-cinematic-mobile";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,7 +6,8 @@ const ASSETS = [
   "./icon-192.png",
   "./icon-512.png",
   "./icon-512-maskable.png",
-  "./apple-touch-icon.png"
+  "./apple-touch-icon.png",
+  "./hero-space.webp"
 ];
 
 self.addEventListener("install", e => {

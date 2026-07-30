@@ -1,18 +1,19 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
 <title>Retirement Tracker</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#070B07">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Retirement">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link href="manifest.json" rel="manifest"/>
+<meta content="#02080E" name="theme-color"/>
+<link href="apple-touch-icon.png" rel="apple-touch-icon"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="Retirement" name="apple-mobile-web-app-title"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500&amp;display=swap" rel="stylesheet"/>
 <style>
 :root{
   --sheet:#131A14;
@@ -308,231 +309,491 @@ tfoot td{border-bottom:0;border-top:1.5px solid var(--graphite);font-weight:600}
   caption,.headline,.dimwrap,.inc,.leg{padding-left:14px;padding-right:14px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+
+/* ===== iPhone safe-area framing =====
+   Keeps the Dynamic Island/status icons readable, softens content as it approaches
+   the top sensor area, reserves the Home Indicator area, and masks the viewport to
+   the rounded shape of modern iPhones while the page rubber-bands during scrolling. */
+html{
+  min-height:100%;
+  background:#000;
+  overscroll-behavior-y:none;
+}
+body{
+  min-height:100dvh;
+  padding-top:calc(26px + env(safe-area-inset-top, 0px));
+  padding-right:calc(14px + env(safe-area-inset-right, 0px));
+  padding-bottom:calc(26px + env(safe-area-inset-bottom, 0px));
+  padding-left:calc(14px + env(safe-area-inset-left, 0px));
+}
+
+@media (max-width:860px){
+  html,body{background:#000}
+  body{
+    min-height:100dvh;
+    padding-top:calc(8px + env(safe-area-inset-top, 0px));
+    padding-right:calc(8px + env(safe-area-inset-right, 0px));
+    padding-bottom:calc(14px + env(safe-area-inset-bottom, 0px));
+    padding-left:calc(8px + env(safe-area-inset-left, 0px));
+    background-image:none;
+  }
+  .sheet{
+    position:relative;
+    isolation:isolate;
+    border-radius:26px;
+    background-color:var(--page);
+    background-image:
+      linear-gradient(var(--page-line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--page-line) 1px,transparent 1px);
+    background-size:18px 18px;
+    box-shadow:0 0 0 1px rgba(255,255,255,.035),0 18px 60px rgba(0,0,0,.55);
+  }
+
+  /* A fixed frosted fade behind the time, Dynamic Island, signal and battery. */
+  body::before{
+    content:"";
+    position:fixed;
+    z-index:2147483646;
+    top:0;left:0;right:0;
+    height:calc(env(safe-area-inset-top, 0px) + 34px);
+    pointer-events:none;
+    background:linear-gradient(
+      to bottom,
+      rgba(0,0,0,.98) 0%,
+      rgba(2,7,6,.97) 48%,
+      rgba(2,7,6,.80) 68%,
+      rgba(2,7,6,.32) 86%,
+      rgba(2,7,6,0) 100%
+    );
+    -webkit-backdrop-filter:blur(18px) saturate(125%);
+    backdrop-filter:blur(18px) saturate(125%);
+  }
+
+  /* Transparent rounded viewport with a black outside shadow. The shadow only
+     occupies the four corner cut-outs, so square page edges never flash during
+     iOS rubber-band scrolling. */
+  body::after{
+    content:"";
+    position:fixed;
+    z-index:2147483647;
+    inset:0;
+    border-radius:34px;
+    pointer-events:none;
+    box-shadow:
+      0 0 0 100vmax #000,
+      inset 0 0 0 1px rgba(255,255,255,.045),
+      inset 0 0 24px rgba(0,0,0,.24);
+  }
+}
+
+/* Installed iPhone PWA: slightly stronger framing because there is no Safari UI
+   surrounding the page. Browsers that do not support display-mode ignore this. */
+@media (display-mode:standalone) and (max-width:860px){
+  body{padding-top:calc(7px + env(safe-area-inset-top, 0px))}
+  .sheet{border-radius:28px}
+  body::after{border-radius:36px}
+}
+
+
+
+/* ========================================================================== */
+/* 2026 MOBILE APP REDESIGN                                                   */
+/* ========================================================================== */
+:root{
+  --page:#02070D;
+  --sheet:#030A11;
+  --panel:#07111A;
+  --panel-2:#091722;
+  --graphite:#F3F7FA;
+  --graphite-2:#91A3B2;
+  --rule:#1B3345;
+  --accent:#39D87B;
+  --accent-2:#1EB6FF;
+  --verify:#39D87B;
+  --revision:#FFAA3B;
+  --dim:#9A55FF;
+  --nav-h:76px;
+}
+html{background:#000;overscroll-behavior-y:none}
+body{
+  background:#000;
+  color:var(--graphite);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+button,input{font:inherit}
+.sheet{
+  position:relative;
+  overflow:clip;
+  background:
+    radial-gradient(1100px 520px at 75% -10%,rgba(27,134,203,.16),transparent 48%),
+    linear-gradient(180deg,#020910 0%,#02070D 100%);
+}
+.appbar{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px 10px;
+  min-height:64px;
+  background:linear-gradient(180deg,rgba(2,8,14,.96),rgba(2,8,14,.72));
+  border-bottom:1px solid rgba(74,116,142,.12);
+  position:relative;z-index:9;
+}
+.appbar-btn{
+  width:42px;height:42px;border-radius:50%;border:1px solid rgba(100,142,166,.28);
+  display:grid;place-items:center;background:rgba(10,23,34,.78);color:#EAF4F9;
+  box-shadow:inset 0 0 18px rgba(30,182,255,.035);
+}
+.appbar-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.appbar-copy{min-width:0;display:flex;flex-direction:column;flex:1;line-height:1.15}
+.appbar-copy strong{font-size:18px;letter-spacing:-.015em}
+.appbar-copy span{margin-top:3px;color:var(--graphite-2);font-size:12px}
+.appbar-actions{display:flex;gap:8px}.appbar-cloud{color:var(--accent)}
+.titleblock{
+  position:relative;display:block;overflow:hidden;
+  min-height:292px;margin:0;border:0;border-radius:0 0 28px 28px;
+  background:
+    linear-gradient(180deg,rgba(2,8,14,.02) 0%,rgba(2,8,14,.20) 42%,rgba(2,8,14,.98) 100%),
+    linear-gradient(90deg,rgba(2,8,14,.92) 0%,rgba(2,8,14,.64) 38%,rgba(2,8,14,.04) 75%),
+    url("hero-space.webp") center/cover no-repeat;
+  box-shadow:inset 0 -1px 0 rgba(92,134,158,.18);
+}
+.titleblock::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(440px 180px at 74% 55%,rgba(255,173,57,.12),transparent 60%);
+}
+.tb-main{position:relative;z-index:2;padding:20px 20px 0;min-height:68px;background:none}
+.tb-title{font-family:"IBM Plex Mono",monospace;font-size:10px;line-height:1.1;letter-spacing:.18em;color:var(--accent);font-weight:600;text-transform:uppercase;margin:0}
+.tb-sub{font-family:"IBM Plex Sans",sans-serif;margin-top:7px;color:rgba(231,241,247,.64);font-size:12px;letter-spacing:0}
+.tb-meta{
+  position:absolute;right:18px;top:18px;z-index:3;
+  display:grid;grid-template-columns:repeat(3,auto);grid-template-rows:none;
+  border:1px solid rgba(123,167,189,.24);border-radius:16px;overflow:hidden;
+  min-width:0;background:rgba(3,12,20,.62);backdrop-filter:blur(16px);
+}
+.tb-cell{min-width:58px;padding:8px 9px;border:0;border-right:1px solid rgba(123,167,189,.16);align-items:center;text-align:center}
+.tb-cell:last-child{border-right:0}.tb-k{font-size:7px;letter-spacing:.12em}.tb-v{font-family:"IBM Plex Mono",monospace;font-size:12px;color:#F5F8FA}
+.headline{
+  position:absolute;z-index:4;left:20px;right:20px;bottom:24px;
+  padding:0;background:none;border:0;border-radius:0;overflow:visible;
+}
+.hl-k{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.18em;color:var(--accent)}
+.hl-v{
+  margin:6px 0 2px;font-family:"Barlow Condensed",sans-serif;font-size:clamp(48px,14vw,72px);line-height:.88;
+  color:#F7FAFC;text-shadow:0 0 22px rgba(62,213,127,.10);letter-spacing:-.015em;
+}
+.hl-note{max-width:74%;margin-top:8px;color:rgba(230,239,244,.74);font-size:10px;line-height:1.55;text-transform:uppercase}
+.hero-years{
+  margin-top:13px;display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:999px;
+  border:1px solid rgba(109,151,176,.34);background:rgba(4,14,23,.66);backdrop-filter:blur(12px);
+  color:#EAF4F9;font-family:"IBM Plex Mono",monospace;font-size:10px;
+}
+.hero-years svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.body{display:block;padding:14px 14px calc(var(--nav-h) + 22px);background:transparent}
+.results{display:flex;flex-direction:column;gap:12px;padding:0;background:transparent}
+.results > .dimwrap{order:1}.results > .leg{order:2}.results > .pace{order:3}.results > .inc{order:4}.results > .contribution-card{order:5}.results > .tbl-wrap{order:6}
+.dimwrap,.leg,.pace,.inc,.contribution-card,.tbl-wrap{
+  border-color:rgba(83,124,149,.28)!important;
+  background:linear-gradient(180deg,rgba(8,20,30,.97),rgba(4,13,21,.99))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.018),0 14px 38px rgba(0,0,0,.18);
+}
+.dimwrap{padding:16px 14px 8px;border-radius:22px 22px 0 0;border-bottom:0}
+.dimcap{display:flex;flex-direction:column;gap:4px;margin:0 0 12px;color:#F4F8FA;font-family:"IBM Plex Sans",sans-serif;font-size:16px;letter-spacing:-.01em;text-transform:none;font-weight:600}
+.dimcap small{color:var(--graphite-2);font-size:11px;font-weight:400;letter-spacing:0}
+.iso3d{height:330px;border:0;border-radius:16px;background:radial-gradient(600px 250px at 70% 45%,rgba(35,216,133,.05),transparent 60%),#030B12;box-shadow:inset 0 0 0 1px rgba(71,113,138,.20);overflow:hidden}
+.leg{margin-top:-12px;padding:15px 14px 16px;border-radius:0 0 22px 22px;border-top:0;gap:7px 15px}
+.leg-i{font-size:9px;color:#C9D5DB}.leg-s{width:12px;height:7px;border-radius:2px;border:0;box-shadow:0 0 8px currentColor}
+.pace{padding:16px;border-radius:20px;display:grid;grid-template-columns:112px 1fr;gap:14px;align-items:center}
+.pace-gauge-wrap{width:112px}.pace-v{font-size:13px;bottom:1px}.pace-body{min-width:0}
+.pace-k{font-family:"IBM Plex Sans",sans-serif;font-size:15px;letter-spacing:-.01em;text-transform:none;color:#F4F8FA;font-weight:600}
+.pace-note{font-size:10px;line-height:1.55;color:var(--graphite-2)}
+.inc{padding:16px;border-radius:20px}.inc-h{margin-bottom:12px;font-family:"IBM Plex Sans",sans-serif;font-size:15px;letter-spacing:-.01em;text-transform:none;color:#F4F8FA;font-weight:600}
+.inc-g{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.inc-c{min-width:0;border-radius:14px;padding:12px;background:linear-gradient(180deg,rgba(10,27,40,.86),rgba(5,17,27,.94));border-color:rgba(78,120,145,.24)}
+.inc-c[data-tot="1"]{grid-column:1/-1;border-color:rgba(57,216,123,.42);background:linear-gradient(135deg,rgba(18,74,45,.34),rgba(5,20,25,.96))}
+.inc-k{font-size:8px}.inc-v{font-size:25px}.inc-f{font-size:9px}
+.contribution-card{border:1px solid;border-radius:20px;padding:15px;display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:center}
+.contribution-icon{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:var(--accent);background:rgba(57,216,123,.09);border:1px solid rgba(57,216,123,.22)}
+.contribution-icon svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.contribution-copy{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.contribution-copy span{width:100%;font-size:10px;color:var(--graphite-2);text-transform:uppercase;letter-spacing:.08em}.contribution-copy strong{font-family:"Barlow Condensed",sans-serif;font-size:30px;line-height:1}.contribution-copy small{color:var(--graphite-2)}
+.contribution-detail{grid-column:1/-1;color:var(--accent);font-size:10px;padding-left:52px;margin-top:-5px}
+.tbl-wrap{border-radius:20px;overflow:hidden}.tbl-wrap caption{font-family:"IBM Plex Sans",sans-serif;font-size:15px;letter-spacing:-.01em;text-transform:none;color:#F4F8FA;font-weight:600;padding:16px 16px 10px}
+table{font-size:10px;min-width:720px}th,td{padding:8px 9px;border-bottom-color:rgba(55,92,114,.28)}thead th{font-size:8px;border-bottom-color:rgba(83,124,149,.36)}
+.inputs{
+  position:fixed;z-index:1001;left:0;right:0;bottom:0;top:max(48px,env(safe-area-inset-top));
+  display:flex;flex-direction:column;gap:10px;overflow:auto;
+  padding:0 12px calc(26px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,#06111A,#02080E 70%);
+  transform:translateY(104%);opacity:.3;pointer-events:none;
+  transition:transform .34s cubic-bezier(.22,.8,.22,1),opacity .25s ease;
+  border-radius:28px 28px 0 0;border-top:1px solid rgba(116,158,180,.34);
+  box-shadow:0 -30px 80px rgba(0,0,0,.58);
+}
+body.drawer-open .inputs{transform:translateY(0);opacity:1;pointer-events:auto}
+.drawer-head{position:sticky;top:0;z-index:5;margin:0 -12px 2px;padding:14px 16px 13px;display:flex;align-items:center;justify-content:space-between;background:rgba(4,13,21,.92);backdrop-filter:blur(22px);border-bottom:1px solid rgba(87,128,151,.22)}
+.drawer-head div{display:flex;flex-direction:column}.drawer-head strong{font-size:18px}.drawer-head span{margin-top:3px;color:var(--graphite-2);font-size:11px}.drawer-head button{width:36px;height:36px;border-radius:50%;border:1px solid rgba(105,147,170,.3);background:#0B1A25;color:#EAF3F7;font-size:25px;line-height:1}
+.grp,.scn{border-radius:18px;border-color:rgba(73,115,139,.28);background:linear-gradient(180deg,rgba(10,24,35,.98),rgba(5,15,23,.98))}
+.grp-h{padding:13px 14px;font-size:15px;text-transform:none;letter-spacing:0}.grp-icon{width:30px;height:30px;border-radius:10px}.grp-b{padding:8px 14px 16px}.f{margin-bottom:17px}.f-l{font-size:11px;font-weight:500}.f-v,.f-in{font-size:12px}.f-in{color:#E8F3F7}.f-logtoggle{color:#6E91A5;font-size:9px}
+input[type=range]::-webkit-slider-runnable-track{height:5px;background:linear-gradient(90deg,rgba(57,216,123,.58),rgba(40,82,102,.52))}
+input[type=range]::-webkit-slider-thumb{width:24px;height:24px;margin-top:-10px;border-radius:50%;background:#43DF83;box-shadow:0 0 0 5px rgba(57,216,123,.12),0 0 17px rgba(57,216,123,.27)}
+input[type=range]::-moz-range-track{height:5px;background:linear-gradient(90deg,rgba(57,216,123,.58),rgba(40,82,102,.52))}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#43DF83;box-shadow:0 0 0 5px rgba(57,216,123,.12),0 0 17px rgba(57,216,123,.27)}
+.scn{padding:15px}.btn{border-radius:10px;background:rgba(57,216,123,.12);border-color:rgba(57,216,123,.34);color:#EAF6EF}.btn[data-alt="1"]{border-color:rgba(104,145,168,.32);background:#091721;color:#DCE7EC}.scn-row input[type=text]{border-radius:10px;background:#06111A;border-color:rgba(80,122,146,.32)}
+.drawer-backdrop{display:block;position:fixed;z-index:1000;inset:0;border:0;background:rgba(0,0,0,.62);opacity:0;pointer-events:none;transition:opacity .24s ease;backdrop-filter:blur(3px)}
+body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
+.bottom-nav{
+  position:fixed;z-index:900;left:8px;right:8px;bottom:calc(6px + env(safe-area-inset-bottom));
+  min-height:var(--nav-h);display:grid;grid-template-columns:repeat(5,1fr);align-items:center;
+  padding:8px 5px 7px;border:1px solid rgba(75,116,141,.28);border-radius:24px;
+  background:rgba(3,12,20,.92);backdrop-filter:blur(24px) saturate(130%);
+  box-shadow:0 14px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.025);
+}
+.nav-item{border:0;background:none;color:#7F93A1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 1px;font-size:8px;min-width:0}.nav-item svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.nav-item.active{color:var(--accent)}
+@media (min-width:861px){
+  body{padding:24px;background:radial-gradient(1000px 520px at 70% 0,rgba(28,143,207,.13),transparent 55%),#02070D}
+  .sheet{max-width:1240px;margin:auto;border:1px solid rgba(87,128,151,.18);border-radius:30px;box-shadow:0 30px 90px rgba(0,0,0,.55)}
+  .appbar{border-radius:30px 30px 0 0}.titleblock{min-height:350px}.hl-v{font-size:84px}.body{display:grid;grid-template-columns:1fr 350px;gap:16px;padding:16px 16px 110px}.results{grid-column:1}.inputs{position:static;grid-column:2;grid-row:1;transform:none;opacity:1;pointer-events:auto;max-height:none;border-radius:22px;padding:0;background:transparent;box-shadow:none;overflow:visible}.drawer-head,.drawer-backdrop{display:none}.bottom-nav{left:50%;right:auto;transform:translateX(-50%);width:min(620px,calc(100vw - 60px))}.iso3d{height:420px}.pace{grid-template-columns:150px 1fr}.pace-gauge-wrap{width:150px}.inc-g{grid-template-columns:repeat(5,1fr)}.inc-c[data-tot="1"]{grid-column:auto}.contribution-detail{grid-column:2;padding:0}.tbl-wrap table{min-width:0}
+}
+@media (max-width:860px){
+  html,body{background:#000}
+  body{min-height:100dvh;padding:calc(6px + env(safe-area-inset-top)) 6px calc(6px + env(safe-area-inset-bottom));background-image:none}
+  .sheet{min-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 12px);border-radius:32px;box-shadow:0 0 0 1px rgba(255,255,255,.035),0 22px 70px rgba(0,0,0,.62)}
+  body::before{height:calc(env(safe-area-inset-top) + 12px);background:linear-gradient(to bottom,rgba(0,0,0,.99),rgba(2,8,14,.94) 54%,rgba(2,8,14,.42) 82%,transparent);backdrop-filter:blur(20px) saturate(125%)}
+  body::after{border-radius:38px;box-shadow:0 0 0 100vmax #000,inset 0 0 0 1px rgba(255,255,255,.035),inset 0 0 28px rgba(0,0,0,.28)}
+}
+@media (max-width:390px){
+  .titleblock{min-height:282px}.tb-meta{right:12px;top:13px}.tb-cell{min-width:52px;padding:7px 6px}.headline{left:16px;right:16px;bottom:19px}.hl-v{font-size:50px}.hl-note{max-width:82%}.body{padding-left:10px;padding-right:10px}.iso3d{height:305px}.pace{grid-template-columns:96px 1fr}.pace-gauge-wrap{width:96px}.nav-item span{font-size:7px}.appbar{padding-left:12px;padding-right:12px}.appbar-copy strong{font-size:16px}
+}
 </style>
 </head>
 <body>
 <div class="sheet">
-
-  <div class="titleblock">
-    <div class="tb-main">
-      <svg class="tb-moon" viewBox="0 0 220 100" preserveAspectRatio="xMaxYMid meet" aria-hidden="true">
-        <defs>
-          <filter id="moonGlow" x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="4.5"/>
-          </filter>
-        </defs>
-        <path d="M172,18 A27,27 0 1,0 172,72 A19,19 0 1,1 172,18 Z" fill="var(--accent)" opacity="0.85" filter="url(#moonGlow)"/>
-        <path d="M172,18 A27,27 0 1,0 172,72 A19,19 0 1,1 172,18 Z" fill="var(--accent)"/>
-        <circle cx="172" cy="45" r="29" fill="none" stroke="var(--accent)" stroke-width="0.6" opacity="0.22"/>
-        <circle cx="148" cy="18" r="1.3" fill="var(--graphite)" opacity="0.55"/>
-        <circle cx="126" cy="52" r="1" fill="var(--graphite)" opacity="0.4"/>
-        <circle cx="104" cy="28" r="1.2" fill="var(--graphite)" opacity="0.45"/>
-      </svg>
-      <h1 class="tb-title">Retirement<br>Tracker</h1>
-    </div>
-    <div class="tb-meta">
-      <div class="tb-cell"><span class="tb-k">Retire</span><span class="tb-v" id="m-year">2042</span></div>
-      <div class="tb-cell"><span class="tb-k">Age</span><span class="tb-v" id="m-age">60</span></div>
-      <div class="tb-cell"><span class="tb-k">Return</span><span class="tb-v" id="m-ret">12.0%</span></div>
-    </div>
-  </div>
-
-  <div class="body">
-
-    <!-- ============ INPUTS ============ -->
-    <div class="inputs">
-
-      <section class="grp" data-open="1">
-        <button class="grp-h" data-t><span class="grp-icon" style="--ic:#C4E538"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.5V8l2.6 1.6"/></svg></span>Timing &amp; Markets<span class="grp-tri">▾</span></button>
-        <div class="grp-b">
-          <div class="f">
-            <div class="f-top"><span class="f-l">Retirement Year</span><span class="f-v"><input class="f-in" id="v-retire" type="number" min="2036.01" max="2052.11" step="0.01"></span></div>
-            <input type="range" id="retire" min="0" max="186" step="any" value="69">
-          </div>
-          <div class="f">
-            <div class="f-top"><span class="f-l">Annual Return</span><span class="f-v"><input class="f-in" id="v-rate" type="number" min="4" max="15" step="0.1">%</span></div>
-            <input type="range" id="rate" min="4" max="15" step="any" value="12">
-          </div>
-          <div class="f">
-            <div class="f-top"><span class="f-l">Withdrawal Rate</span><span class="f-v"><input class="f-in" id="v-wd" type="number" min="2" max="7" step="0.01">%</span></div>
-            <input type="range" id="wd" min="2" max="7" step="any" value="4">
-          </div>
-          <div class="f">
-            <div class="f-top"><span class="f-l">Hours Worked Each Year</span><span class="f-v"><input class="f-in" id="v-hours" type="number" min="1400" max="2400" step="1"></span></div>
-            <input type="range" id="hours" min="1400" max="2400" step="any" value="1959">
-          </div>
-        </div>
-      </section>
-
-      <section class="grp" data-open="1">
-        <button class="grp-h" data-t><span class="grp-icon" style="--ic:#C4E538"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M8 1.6 13 3.4v4.3c0 3.6-2.2 5.9-5 6.7-2.8-.8-5-3.1-5-6.7V3.4z"/></svg></span>401(a) Plan<span class="grp-tri">▾</span></button>
-        <div class="grp-b">
-          <div class="f">
-            <div class="f-top"><span class="f-l">Current Balance</span><span class="f-v">$<input class="f-in" id="v-bal" type="text" inputmode="decimal"></span></div>
-            <input type="range" id="bal" min="0" max="150000" step="any" value="41166">
-          </div>
-          <div class="f">
-            <div class="f-top"><span class="f-l">Elective Rate Now</span><span class="f-v">$<input class="f-in" id="v-elec" type="text" inputmode="decimal">/hr</span></div>
-            <input type="range" id="elec" min="1" max="12" step="any" value="5">
-          </div>
-          <div class="f">
-            <div class="f-top"><span class="f-l">Step-Up Each July</span><span class="f-v">$<input class="f-in" id="v-step" type="text" inputmode="decimal">/hr</span></div>
-            <input type="range" id="step" min="0" max="4" step="any" value="2">
-          </div>
-          <div class="f">
-            <div class="f-top"><span class="f-l">Employer Contribution</span><span class="f-v" id="v-empr">$1.00/hr</span></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="grp" data-open="0">
-        <button class="grp-h" data-t><span class="grp-icon" style="--ic:#F59E0B"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 14V7"/><path d="M8 7C8 3 5 2 3 2c0 3 1.5 5 5 5Z"/><path d="M8 9c0-3.2 2.4-4.6 5-4.8.2 3-1.4 5.4-5 4.8Z"/></svg></span>Roth IRAs<span class="grp-tri">▾</span></button>
-        <div class="grp-b">
-          <div class="f">
-            <div class="f-top"><span class="f-l">Spouse Start / Month</span><span class="f-v">$<input class="f-in" id="v-wm" type="text" inputmode="decimal"></span></div>
-            <input type="range" id="wm" min="0" max="700" step="any" value="150">
-          </div>
-          <div class="f">
-            <div class="f-top"><span class="f-l">Spouse July Step-Up</span><span class="f-v">$<input class="f-in" id="v-wstep" type="text" inputmode="decimal"></span></div>
-            <input type="range" id="wstep" min="0" max="400" step="any" value="150">
-          </div>
-          <div class="f">
-            <div class="f-top"><span class="f-l">Annual Roth Limit (50+)</span><span class="f-v">$<input class="f-in" id="v-rcap" type="text" inputmode="decimal"></span></div>
-            <input type="range" id="rcap" min="6000" max="14000" step="any" value="8000">
-          </div>
-        </div>
-      </section>
-
-      <section class="grp" data-open="0">
-        <button class="grp-h" data-t><span class="grp-icon" style="--ic:#2DD4BF"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="2" y="5.5" width="12" height="8" rx="1.2"/><path d="M6 5.5V4a1.2 1.2 0 0 1 1.2-1.2h1.6A1.2 1.2 0 0 1 10 4v1.5"/><path d="M2 9h12"/></svg></span>SEP<span class="grp-tri">▾</span></button>
-        <div class="grp-b">
-          <div class="f">
-            <div class="f-top"><span class="f-l">Spouse Net Business Income</span><span class="f-v">$<input class="f-in" id="v-sinc" type="text" inputmode="decimal"></span></div>
-            <input type="range" id="sinc" min="0" max="250000" step="any" value="100000">
-          </div>
-          <div class="f">
-            <div class="f-top"><span class="f-l">SEP Ceiling (25% Of Income)</span><span class="f-v" id="v-sepcap">$25,000</span></div>
-            <input type="range" id="seppct" min="0" max="25" step="any" value="25">
-          </div>
-        </div>
-      </section>
-
-      <section class="grp" data-open="0">
-        <button class="grp-h" data-t><span class="grp-icon" style="--ic:#A855F7"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12 6 7.5l3 2.5 5-6"/><path d="M11 3.5h3V6.5"/></svg></span>Brokerage<span class="grp-tri">▾</span></button>
-        <div class="grp-b">
-          <div class="f">
-            <div class="f-top"><span class="f-l">Marginal Tax On Overflow</span><span class="f-v"><input class="f-in" id="v-tax" type="number" min="0" max="50" step="0.1">%</span></div>
-            <input type="range" id="tax" min="0" max="50" step="any" value="33.3">
-          </div>
-          <div class="f">
-            <div class="f-top"><span class="f-l">Brokerage Tax Drag</span><span class="f-v"><input class="f-in" id="v-drag" type="number" min="0" max="3" step="0.1">%</span></div>
-            <input type="range" id="drag" min="0" max="3" step="any" value="1.8">
-          </div>
-        </div>
-      </section>
-
-      <section class="grp" data-open="0">
-        <button class="grp-h" data-t><span class="grp-icon" style="--ic:#7E97A3"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M1.5 5 8 1.6 14.5 5"/><path d="M2.5 5h11v1.4h-11z"/><path d="M3.5 6.5v6M6.5 6.5v6M9.5 6.5v6M12.5 6.5v6"/><path d="M2 13.5h12"/></svg></span>Pension<span class="grp-tri">▾</span></button>
-        <div class="grp-b">
-          <div class="f">
-            <div class="f-top"><span class="f-l">Pension, Single Life</span><span class="f-v">$<input class="f-in" id="v-pen" type="text" inputmode="decimal">/mo</span></div>
-            <input type="range" id="pen" min="0" max="10000" step="any" value="5511">
-          </div>
-          <div class="f">
-            <div class="f-top"><span class="f-l">Survivor Benefit Reduction</span><span class="f-v"><input class="f-in" id="v-surv" type="number" min="0" max="25" step="1">%</span></div>
-            <input type="range" id="surv" min="0" max="25" step="any" value="0">
-          </div>
-        </div>
-      </section>
-
-      <section class="grp" data-open="0">
-        <button class="grp-h" data-t><span class="grp-icon" style="--ic:#C4E538"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="1.6" y="3" width="12.8" height="10" rx="1.3"/><circle cx="5.2" cy="7" r="1.4" fill="currentColor" stroke="none"/><path d="M2.8 11.2c.4-1.4 1.4-2.1 2.4-2.1s2 .7 2.4 2.1"/><path d="M9.4 6h3.2M9.4 8.4h3.2"/></svg></span>Social Security<span class="grp-tri">▾</span></button>
-        <div class="grp-b">
-          <div class="f">
-            <div class="f-top"><span class="f-l">Your SS</span><span class="f-v">$<input class="f-in" id="v-ss67" type="text" inputmode="decimal">/mo</span></div>
-            <input type="range" id="ss67" min="0" max="6000" step="any" value="3503">
-          </div>
-          <div class="f">
-            <div class="f-top"><span class="f-l">Your Claim Age</span><span class="f-v"><input class="f-in" id="v-ssageYou" type="number" min="62.01" max="70.12" step="0.01"></span></div>
-            <input type="range" id="ssageYou" min="0" max="107" step="any" value="60">
-          </div>
-          <div class="f">
-            <div class="f-top"><span class="f-l">Spouse SS</span><span class="f-v">$<input class="f-in" id="v-wss" type="text" inputmode="decimal">/mo</span></div>
-            <input type="range" id="wss" min="0" max="4000" step="any" value="1279">
-          </div>
-          <div class="f">
-            <div class="f-top"><span class="f-l">Spouse Claim Age</span><span class="f-v"><input class="f-in" id="v-ssageSpouse" type="number" min="62.01" max="70.12" step="0.01"></span></div>
-            <input type="range" id="ssageSpouse" min="0" max="107" step="any" value="60">
-          </div>
-        </div>
-      </section>
-
-      <div class="scn">
-        <div class="scn-h">Saved scenarios</div>
-        <div class="scn-row">
-          <input type="text" id="scn-name" placeholder="Name this scenario" maxlength="28">
-          <button class="btn" id="scn-save">Save</button>
-          <button class="btn" data-alt="1" id="scn-reset">Reset</button>
-        </div>
-        <div class="chips" id="chips"></div>
-        <div class="msg" id="msg"></div>
-      </div>
-    </div>
-
-    <!-- ============ RESULTS ============ -->
-    <div class="results">
-
-      <div class="headline">
-        <div class="hl-k">Total at retirement</div>
-        <div class="hl-v" id="hl-total">$0</div>
-        <div class="hl-note" id="hl-note"></div>
-      </div>
-
-      <div class="pace">
-        <div class="pace-gauge-wrap">
-          <svg id="pacegauge" viewBox="0 0 160 92" role="img" aria-label="Pace gauge"></svg>
-          <div class="pace-v flat" id="pace-v">—</div>
-        </div>
-        <div class="pace-body">
-          <div class="pace-k" id="pace-k">Pace Check — Current Balance Vs Goal</div>
-          <div class="pace-note" id="pace-note">Log at least two years of Current Balance to see your pace.</div>
-        </div>
-      </div>
-
-      <div class="dimwrap">
-        <div class="dimcap" id="dimcap">Portfolio growth & composition</div>
-        <div class="iso3d" id="iso3d">
-          <svg id="isosvg" role="img" aria-labelledby="isotitle"><title id="isotitle">Isometric 3D chart of account balances growing year by year</title></svg>
-        </div>
-      </div>
-      <div class="leg" id="leg"></div>
-
-      <div class="inc">
-        <div class="inc-h">Monthly income at retirement</div>
-        <div class="inc-g" id="inc-g"></div>
-      </div>
-
-      <div class="tbl-wrap">
-        <table>
-          <caption>Balances by milestone age</caption>
-          <thead>
-            <tr>
-              <th scope="col">Age / year</th>
-              <th scope="col">401(a)</th>
-              <th scope="col">Spouse Roth</th>
-              <th scope="col">Your Roth</th>
-              <th scope="col">SEP</th>
-              <th scope="col">Brokerage</th>
-              <th scope="col">Total</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+<header aria-label="Retirement Tracker navigation" class="appbar">
+<button aria-label="Open retirement inputs" class="appbar-btn" id="open-inputs" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+</button>
+<div class="appbar-copy"><strong>Retirement Tracker</strong><span>Plan today. Live tomorrow.</span></div>
+<div class="appbar-actions">
+<button aria-label="Saved locally" class="appbar-btn appbar-cloud" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.2 8.3 4.5 4.5 0 0 0 7 18Z"></path><path d="m9 13 3-3 3 3M12 10v7"></path></svg>
+</button>
 </div>
+</header><div class="titleblock">
+<div class="tb-main">
 
+<h1 class="tb-title">RETIREMENT OUTLOOK</h1><div class="tb-sub">Your projected destination</div>
+</div>
+<div class="tb-meta">
+<div class="tb-cell"><span class="tb-k">Retire</span><span class="tb-v" id="m-year">2042</span></div>
+<div class="tb-cell"><span class="tb-k">Age</span><span class="tb-v" id="m-age">60</span></div>
+<div class="tb-cell"><span class="tb-k">Return</span><span class="tb-v" id="m-ret">12.0%</span></div>
+</div>
+<div class="headline">
+<div class="hl-k">Total at retirement</div>
+<div class="hl-v" id="hl-total">$0</div>
+<div class="hl-note" id="hl-note"></div>
+<div class="hero-years">
+<svg aria-hidden="true" viewbox="0 0 24 24"><rect height="16" rx="3" width="18" x="3" y="5"></rect><path d="M8 3v4M16 3v4M3 10h18"></path></svg>
+<span id="hero-years">—</span>
+</div></div></div>
+<div class="body">
+<!-- ============ INPUTS ============ -->
+<div class="inputs" id="inputs-drawer"><div class="drawer-head">
+<div><strong>Adjust Inputs</strong><span>Changes update the projection instantly.</span></div>
+<button aria-label="Close retirement inputs" id="close-inputs" type="button">×</button>
+</div>
+<section class="grp" data-open="1">
+<button class="grp-h" data-t=""><span class="grp-icon" style="--ic:#C4E538"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.4" viewbox="0 0 16 16"><circle cx="8" cy="8" r="6.2"></circle><path d="M8 4.5V8l2.6 1.6"></path></svg></span>Timing &amp; Markets<span class="grp-tri">▾</span></button>
+<div class="grp-b">
+<div class="f">
+<div class="f-top"><span class="f-l">Retirement Year</span><span class="f-v"><input class="f-in" id="v-retire" max="2052.11" min="2036.01" step="0.01" type="number"/></span></div>
+<input id="retire" max="186" min="0" step="any" type="range" value="69"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Annual Return</span><span class="f-v"><input class="f-in" id="v-rate" max="15" min="4" step="0.1" type="number"/>%</span></div>
+<input id="rate" max="15" min="4" step="any" type="range" value="12"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Withdrawal Rate</span><span class="f-v"><input class="f-in" id="v-wd" max="7" min="2" step="0.01" type="number"/>%</span></div>
+<input id="wd" max="7" min="2" step="any" type="range" value="4"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Hours Worked Each Year</span><span class="f-v"><input class="f-in" id="v-hours" max="2400" min="1400" step="1" type="number"/></span></div>
+<input id="hours" max="2400" min="1400" step="any" type="range" value="1959"/>
+</div>
+</div>
+</section>
+<section class="grp" data-open="1">
+<button class="grp-h" data-t=""><span class="grp-icon" style="--ic:#C4E538"><svg fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.4" viewbox="0 0 16 16"><path d="M8 1.6 13 3.4v4.3c0 3.6-2.2 5.9-5 6.7-2.8-.8-5-3.1-5-6.7V3.4z"></path></svg></span>401(a) Plan<span class="grp-tri">▾</span></button>
+<div class="grp-b">
+<div class="f">
+<div class="f-top"><span class="f-l">Current Balance</span><span class="f-v">$<input class="f-in" id="v-bal" inputmode="decimal" type="text"/></span></div>
+<input id="bal" max="150000" min="0" step="any" type="range" value="41166"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Elective Rate Now</span><span class="f-v">$<input class="f-in" id="v-elec" inputmode="decimal" type="text"/>/hr</span></div>
+<input id="elec" max="12" min="1" step="any" type="range" value="5"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Step-Up Each July</span><span class="f-v">$<input class="f-in" id="v-step" inputmode="decimal" type="text"/>/hr</span></div>
+<input id="step" max="4" min="0" step="any" type="range" value="2"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Employer Contribution</span><span class="f-v" id="v-empr">$1.00/hr</span></div>
+</div>
+</div>
+</section>
+<section class="grp" data-open="0">
+<button class="grp-h" data-t=""><span class="grp-icon" style="--ic:#F59E0B"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" viewbox="0 0 16 16"><path d="M8 14V7"></path><path d="M8 7C8 3 5 2 3 2c0 3 1.5 5 5 5Z"></path><path d="M8 9c0-3.2 2.4-4.6 5-4.8.2 3-1.4 5.4-5 4.8Z"></path></svg></span>Roth IRAs<span class="grp-tri">▾</span></button>
+<div class="grp-b">
+<div class="f">
+<div class="f-top"><span class="f-l">Spouse Start / Month</span><span class="f-v">$<input class="f-in" id="v-wm" inputmode="decimal" type="text"/></span></div>
+<input id="wm" max="700" min="0" step="any" type="range" value="150"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Spouse July Step-Up</span><span class="f-v">$<input class="f-in" id="v-wstep" inputmode="decimal" type="text"/></span></div>
+<input id="wstep" max="400" min="0" step="any" type="range" value="150"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Annual Roth Limit (50+)</span><span class="f-v">$<input class="f-in" id="v-rcap" inputmode="decimal" type="text"/></span></div>
+<input id="rcap" max="14000" min="6000" step="any" type="range" value="8000"/>
+</div>
+</div>
+</section>
+<section class="grp" data-open="0">
+<button class="grp-h" data-t=""><span class="grp-icon" style="--ic:#2DD4BF"><svg fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.4" viewbox="0 0 16 16"><rect height="8" rx="1.2" width="12" x="2" y="5.5"></rect><path d="M6 5.5V4a1.2 1.2 0 0 1 1.2-1.2h1.6A1.2 1.2 0 0 1 10 4v1.5"></path><path d="M2 9h12"></path></svg></span>SEP<span class="grp-tri">▾</span></button>
+<div class="grp-b">
+<div class="f">
+<div class="f-top"><span class="f-l">Spouse Net Business Income</span><span class="f-v">$<input class="f-in" id="v-sinc" inputmode="decimal" type="text"/></span></div>
+<input id="sinc" max="250000" min="0" step="any" type="range" value="100000"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">SEP Ceiling (25% Of Income)</span><span class="f-v" id="v-sepcap">$25,000</span></div>
+<input id="seppct" max="25" min="0" step="any" type="range" value="25"/>
+</div>
+</div>
+</section>
+<section class="grp" data-open="0">
+<button class="grp-h" data-t=""><span class="grp-icon" style="--ic:#A855F7"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" viewbox="0 0 16 16"><path d="M2 12 6 7.5l3 2.5 5-6"></path><path d="M11 3.5h3V6.5"></path></svg></span>Brokerage<span class="grp-tri">▾</span></button>
+<div class="grp-b">
+<div class="f">
+<div class="f-top"><span class="f-l">Marginal Tax On Overflow</span><span class="f-v"><input class="f-in" id="v-tax" max="50" min="0" step="0.1" type="number"/>%</span></div>
+<input id="tax" max="50" min="0" step="any" type="range" value="33.3"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Brokerage Tax Drag</span><span class="f-v"><input class="f-in" id="v-drag" max="3" min="0" step="0.1" type="number"/>%</span></div>
+<input id="drag" max="3" min="0" step="any" type="range" value="1.8"/>
+</div>
+</div>
+</section>
+<section class="grp" data-open="0">
+<button class="grp-h" data-t=""><span class="grp-icon" style="--ic:#7E97A3"><svg fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.3" viewbox="0 0 16 16"><path d="M1.5 5 8 1.6 14.5 5"></path><path d="M2.5 5h11v1.4h-11z"></path><path d="M3.5 6.5v6M6.5 6.5v6M9.5 6.5v6M12.5 6.5v6"></path><path d="M2 13.5h12"></path></svg></span>Pension<span class="grp-tri">▾</span></button>
+<div class="grp-b">
+<div class="f">
+<div class="f-top"><span class="f-l">Pension, Single Life</span><span class="f-v">$<input class="f-in" id="v-pen" inputmode="decimal" type="text"/>/mo</span></div>
+<input id="pen" max="10000" min="0" step="any" type="range" value="5511"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Survivor Benefit Reduction</span><span class="f-v"><input class="f-in" id="v-surv" max="25" min="0" step="1" type="number"/>%</span></div>
+<input id="surv" max="25" min="0" step="any" type="range" value="0"/>
+</div>
+</div>
+</section>
+<section class="grp" data-open="0">
+<button class="grp-h" data-t=""><span class="grp-icon" style="--ic:#C4E538"><svg fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.4" viewbox="0 0 16 16"><rect height="10" rx="1.3" width="12.8" x="1.6" y="3"></rect><circle cx="5.2" cy="7" fill="currentColor" r="1.4" stroke="none"></circle><path d="M2.8 11.2c.4-1.4 1.4-2.1 2.4-2.1s2 .7 2.4 2.1"></path><path d="M9.4 6h3.2M9.4 8.4h3.2"></path></svg></span>Social Security<span class="grp-tri">▾</span></button>
+<div class="grp-b">
+<div class="f">
+<div class="f-top"><span class="f-l">Your SS</span><span class="f-v">$<input class="f-in" id="v-ss67" inputmode="decimal" type="text"/>/mo</span></div>
+<input id="ss67" max="6000" min="0" step="any" type="range" value="3503"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Your Claim Age</span><span class="f-v"><input class="f-in" id="v-ssageYou" max="70.12" min="62.01" step="0.01" type="number"/></span></div>
+<input id="ssageYou" max="107" min="0" step="any" type="range" value="60"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Spouse SS</span><span class="f-v">$<input class="f-in" id="v-wss" inputmode="decimal" type="text"/>/mo</span></div>
+<input id="wss" max="4000" min="0" step="any" type="range" value="1279"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Spouse Claim Age</span><span class="f-v"><input class="f-in" id="v-ssageSpouse" max="70.12" min="62.01" step="0.01" type="number"/></span></div>
+<input id="ssageSpouse" max="107" min="0" step="any" type="range" value="60"/>
+</div>
+</div>
+</section>
+<div class="scn" id="scenarios">
+<div class="scn-h">Saved scenarios</div>
+<div class="scn-row">
+<input id="scn-name" maxlength="28" placeholder="Name this scenario" type="text"/>
+<button class="btn" id="scn-save">Save</button>
+<button class="btn" data-alt="1" id="scn-reset">Reset</button>
+</div>
+<div class="chips" id="chips"></div>
+<div class="msg" id="msg"></div>
+</div>
+</div>
+<!-- ============ RESULTS ============ -->
+<div class="results" id="dashboard">
+
+<div class="pace">
+<div class="pace-gauge-wrap">
+<svg aria-label="Pace gauge" id="pacegauge" role="img" viewbox="0 0 160 92"></svg>
+<div class="pace-v flat" id="pace-v">—</div>
+</div>
+<div class="pace-body">
+<div class="pace-k" id="pace-k">Pace Check — Current Balance Vs Goal</div>
+<div class="pace-note" id="pace-note">Log at least two years of Current Balance to see your pace.</div>
+</div>
+</div>
+<div class="dimwrap" id="projections">
+<div class="dimcap" id="dimcap"><span>Projected Portfolio Value</span><small id="projection-range">Portfolio growth &amp; composition</small></div>
+<div class="iso3d" id="iso3d">
+<svg aria-labelledby="isotitle" id="isosvg" role="img"><title id="isotitle">Isometric 3D chart of account balances growing year by year</title></svg>
+</div>
+</div>
+<div class="leg" id="leg"></div>
+<div class="inc">
+<div class="inc-h">Monthly income at retirement</div>
+<div class="inc-g" id="inc-g"></div>
+</div><section class="contribution-card" id="contribution-summary">
+<div class="contribution-icon">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M12 3v18M17 7.5C17 5.6 15 4 12 4S7 5.3 7 7.3c0 4.2 10 2.3 10 7 0 2-2 3.7-5 3.7s-5-1.5-5-3.5"></path></svg>
+</div>
+<div class="contribution-copy"><span>401(a) contribution</span><strong id="contrib-annual">$0</strong><small>/ year</small></div>
+<div class="contribution-detail" id="contrib-detail">Employee + employer</div>
+</section>
+<div class="tbl-wrap" id="activity">
+<table>
+<caption>Balances by milestone age</caption>
+<thead>
+<tr>
+<th scope="col">Age / year</th>
+<th scope="col">401(a)</th>
+<th scope="col">Spouse Roth</th>
+<th scope="col">Your Roth</th>
+<th scope="col">SEP</th>
+<th scope="col">Brokerage</th>
+<th scope="col">Total</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+</div>
+</div>
+<nav aria-label="App navigation" class="bottom-nav">
+<button aria-label="Dashboard" class="nav-item active" data-target="dashboard" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="m3 11 9-8 9 8v10h-6v-6H9v6H3Z"></path></svg><span>Dashboard</span>
+</button>
+<button aria-label="Inputs" class="nav-item" data-action="inputs" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h7M15 18h5"></path><circle cx="16" cy="6" r="2"></circle><circle cx="8" cy="12" r="2"></circle><circle cx="13" cy="18" r="2"></circle></svg><span>Inputs</span>
+</button>
+<button aria-label="Projections" class="nav-item" data-target="projections" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path><path d="m3 14 6-6 5 4 7-8"></path></svg><span>Projections</span>
+</button>
+<button aria-label="Scenarios" class="nav-item" data-action="scenarios" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"></path><path d="m3 12 9 5 9-5M3 16l9 5 9-5"></path></svg><span>Scenarios</span>
+</button>
+<button aria-label="Activity" class="nav-item" data-target="activity" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5M12 7v5l3 2"></path></svg><span>Activity</span>
+</button>
+</nav><button aria-label="Close inputs" class="drawer-backdrop" id="drawer-backdrop" type="button"></button></div>
 <script>
 "use strict";
 
@@ -751,6 +1012,14 @@ function render(){
   $("m-year").textContent = retireYearInt;
   $("m-age").textContent  = retireAge;
   $("m-ret").textContent  = S.rate.toFixed(1) + "%";
+  const yearsToRetire = Math.max(0, retireYearInt - BASE_YEAR);
+  const heroYears = $("hero-years");
+  if (heroYears) heroYears.textContent = `In ${yearsToRetire} year${yearsToRetire === 1 ? "" : "s"}`;
+  const annual401 = (Math.min(S.elec, CAP_CEILING) + S.empr) * S.hours;
+  const contribAnnual = $("contrib-annual");
+  if (contribAnnual) contribAnnual.textContent = money(annual401);
+  const contribDetail = $("contrib-detail");
+  if (contribDetail) contribDetail.textContent = `${money(S.elec * S.hours)} employee + ${money(S.empr * S.hours)} employer per year`;
 
   $("hl-total").textContent = money(atRetire.total);
   const totalContrib = Object.values(contribTotals).reduce((a,c)=>a+c,0);
@@ -969,7 +1238,9 @@ function drawTerrain(snap, retireAge, atRetire){
 
   /* ---- header readouts ---- */
   const cap = $("dimcap");
-  if (cap) cap.textContent = `Portfolio elevation field — ${yearOf(ages[0])} to ${yearOf(ages[last])}`;
+  const rangeLabel = $("projection-range");
+  if (rangeLabel) rangeLabel.textContent = `${yearOf(ages[0])} to ${yearOf(ages[last])} · account growth & composition`;
+  else if (cap) cap.textContent = `Projected Portfolio Value — ${yearOf(ages[0])} to ${yearOf(ages[last])}`;
 
   const tax = atRetire.wroth + atRetire.droth;
   const taxLbl = el("text", {x:4, y:16, "font-family":"IBM Plex Mono, monospace","font-size":"9.5",
@@ -1487,6 +1758,41 @@ syncInputs();
 update();
 loadChips();
 fieldLogInit();
+
+
+
+/* ---------- mobile app navigation ---------- */
+(function setupAppNavigation(){
+  const openBtn = document.getElementById("open-inputs");
+  const closeBtn = document.getElementById("close-inputs");
+  const backdrop = document.getElementById("drawer-backdrop");
+  const drawer = document.getElementById("inputs-drawer");
+  const navButtons = [...document.querySelectorAll(".nav-item")];
+  const setActive = btn => {
+    navButtons.forEach(b => b.classList.toggle("active", b === btn));
+  };
+  const openDrawer = (focusScenarios=false) => {
+    document.body.classList.add("drawer-open");
+    document.body.style.overflow = "hidden";
+    if (focusScenarios) setTimeout(() => document.getElementById("scenarios")?.scrollIntoView({behavior:"smooth",block:"start"}), 340);
+  };
+  const closeDrawer = () => {
+    document.body.classList.remove("drawer-open");
+    document.body.style.overflow = "";
+  };
+  openBtn?.addEventListener("click", () => openDrawer(false));
+  closeBtn?.addEventListener("click", closeDrawer);
+  backdrop?.addEventListener("click", closeDrawer);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+  navButtons.forEach(btn => btn.addEventListener("click", () => {
+    setActive(btn);
+    if (btn.dataset.action === "inputs") return openDrawer(false);
+    if (btn.dataset.action === "scenarios") return openDrawer(true);
+    closeDrawer();
+    const target = document.getElementById(btn.dataset.target || "dashboard");
+    target?.scrollIntoView({behavior:"smooth",block:"start"});
+  }));
+})();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
