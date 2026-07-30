@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retirement Tracker</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#070B07">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Retirement">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sheet:#131A14;
+  --panel:#0D120E;         /* card charcoal, faint green cast */
+  --panel-2:#0A0F0B;
+  --graphite:#E6EFE6;
+  --graphite-2:#8B9C8D;    /* muted gray-green */
+  --rule:#1E2A20;
+  --dim:#A855F7;           /* violet */
+  --revision:#F59E0B;      /* amber */
+  --verify:#C4E538;        /* chartreuse — primary accent + success */
+  --accent:#C4E538;
+  --accent-2:#2DD4BF;      /* teal */
+  --page:#070B07;
+  --page-line:rgba(196,229,56,.04);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--page);
+  color:var(--graphite);
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:14px;
+  line-height:1.45;
+  padding:26px 14px;
+  background-image:
+    linear-gradient(var(--page-line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--page-line) 1px,transparent 1px);
+  background-size:26px 26px;
+}
+.sheet{max-width:1180px;margin:0 auto;background:transparent;border:0}
+
+/* every major block is its own floating card, matching the reference layout */
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:10px}
+
+/* ---- title block ---- */
+.titleblock{display:grid;grid-template-columns:1fr auto;position:relative;
+  background:var(--panel);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.tb-main{padding:15px 18px 13px;display:flex;flex-direction:column;justify-content:center;position:relative}
+.tb-moon{position:absolute;top:0;right:0;width:46%;height:100%;pointer-events:none;overflow:visible}
+.tb-title{
+  font-family:"Barlow Condensed",sans-serif;font-weight:700;
+  font-size:clamp(30px,6.4vw,50px);line-height:.92;
+  text-transform:uppercase;letter-spacing:.005em;margin-top:5px;
+}
+.tb-sub{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--graphite-2);margin-top:7px}
+.tb-meta{
+  border-left:1px solid var(--rule);display:grid;
+  grid-template-rows:repeat(3,1fr);min-width:172px;
+}
+.tb-cell{padding:7px 12px;border-bottom:1px solid var(--rule);display:flex;flex-direction:column;justify-content:center}
+.tb-cell:last-child{border-bottom:0}
+.tb-k{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite-2)}
+.tb-v{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:17px;text-transform:uppercase;line-height:1.1}
+
+/* ---- layout: separated floating cards with gaps ---- */
+.sheet{display:flex;flex-direction:column;gap:11px}
+.titleblock{flex:none}
+.body{display:grid;grid-template-columns:326px 1fr;gap:11px;flex:1;align-items:start}
+.inputs{border:0;background:transparent;display:flex;flex-direction:column;gap:11px}
+.results{padding:0;display:flex;flex-direction:column;gap:11px}
+@media (min-width:861px){
+  html, body{height:100%}
+  .sheet{min-height:calc(100vh - 52px)}
+}
+
+.grp{background:var(--panel);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.grp-h{
+  width:100%;text-align:left;cursor:pointer;background:none;border:0;
+  padding:10px 16px;display:flex;align-items:center;gap:9px;
+  font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:16px;
+  text-transform:uppercase;letter-spacing:.05em;color:var(--graphite);
+}
+.grp-h:hover{background:rgba(255,255,255,.055)}
+.grp-h:focus-visible{outline:2px solid var(--dim);outline-offset:-2px}
+.grp-icon{
+  display:inline-flex;align-items:center;justify-content:center;flex:none;
+  width:23px;height:23px;border-radius:6px;
+  border:1.5px solid var(--ic,var(--accent));color:var(--ic,var(--accent));
+  background:color-mix(in srgb, var(--ic,var(--accent)) 14%, transparent);
+}
+.grp-icon svg{width:13px;height:13px}
+.grp-tri{margin-left:auto;font-size:10px;color:var(--graphite-2);transition:transform .18s}
+.grp[data-open="0"] .grp-tri{transform:rotate(-90deg)}
+.grp[data-open="0"] .grp-b{display:none}
+.grp-b{padding:2px 16px 15px}
+
+.f{margin-bottom:20px}
+.f-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.f-l{font-size:11.5px;color:var(--graphite);letter-spacing:.01em;font-weight:700}
+.f-v{font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:600;color:var(--accent);display:inline-flex;align-items:baseline;gap:1px}
+.f-in{
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:600;color:var(--accent);
+  background:transparent;border:0;border-bottom:1px dashed var(--rule);width:66px;text-align:right;
+  padding:0 2px 1px;-moz-appearance:textfield;transition:border-color .12s,background .12s;
+}
+.f-in:hover{border-bottom-color:var(--dim)}
+.f-in:focus{outline:none;border-bottom:1px solid var(--accent);background:rgba(122,63,242,.09)}
+.f-in::-webkit-outer-spin-button,.f-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:22px;
+  background:transparent;margin-top:3px;cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:var(--rule)}
+input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:var(--rule)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:28px;height:15px;
+  background:var(--accent);
+  border:0;border-radius:9px;box-shadow:0 0 10px rgba(196,229,56,.35);margin-top:-6px;
+  box-shadow:0 1px 3px rgba(23,26,28,.28);
+  transition:transform .12s ease,box-shadow .12s ease,filter .12s ease;
+}
+input[type=range]::-moz-range-thumb{
+  width:28px;height:15px;
+  background:var(--accent);
+  border:0;border-radius:9px;box-shadow:0 0 10px rgba(196,229,56,.35);
+  box-shadow:0 1px 3px rgba(23,26,28,.28);
+  transition:transform .12s ease,box-shadow .12s ease,filter .12s ease;
+}
+input[type=range]:hover::-webkit-slider-thumb{filter:brightness(1.08)}
+input[type=range]:hover::-moz-range-thumb{filter:brightness(1.08)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.12);box-shadow:0 2px 7px rgba(23,26,28,.38)}
+input[type=range]:active::-moz-range-thumb{transform:scale(1.12);box-shadow:0 2px 7px rgba(23,26,28,.38)}
+input[type=range]:focus-visible{outline:2px solid var(--dim);outline-offset:3px}
+.seg{display:flex;border:1px solid var(--graphite);margin-top:4px}
+.seg button{
+  flex:1;background:var(--panel);border:0;border-right:1px solid var(--graphite);
+  padding:6px 3px;cursor:pointer;font-family:"IBM Plex Mono",monospace;
+  font-size:11px;color:var(--graphite-2);
+}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--graphite);color:var(--panel);font-weight:600}
+.seg button:focus-visible{outline:2px solid var(--dim);outline-offset:-2px}
+
+/* ---- results ---- */
+.headline{padding:18px 22px 20px;position:relative;overflow:hidden;
+  background:var(--panel);border:1px solid var(--rule);border-radius:10px}
+.hl-k{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--graphite-2)}
+.hl-v{
+  font-family:"Barlow Condensed",sans-serif;font-weight:700;
+  font-size:clamp(46px,10.5vw,86px);line-height:.88;letter-spacing:-.012em;
+  font-variant-numeric:tabular-nums;margin:3px 0 2px;
+  color:var(--accent);text-shadow:0 0 28px rgba(196,229,56,.28);
+}
+.hl-note{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--graphite-2);text-transform:uppercase;letter-spacing:.02em;margin-top:22px}
+
+/* live pace check */
+.pace{padding:14px 22px;display:flex;flex-wrap:wrap;gap:6px 20px;align-items:center;
+  background:var(--panel);border:1px solid var(--rule);border-radius:10px}
+.pace-gauge-wrap{position:relative;width:140px;flex:none;text-align:center}
+#pacegauge{width:100%;height:auto;display:block}
+.pace-v{
+  position:absolute;left:0;right:0;bottom:2px;text-align:center;
+  font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:13px;
+  letter-spacing:.04em;text-transform:uppercase;
+}
+.pace-v.good{color:var(--verify)}
+.pace-v.bad{color:var(--revision)}
+.pace-v.flat{color:var(--graphite-2)}
+.pace-body{min-width:200px;flex:1}
+.pace-k{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite-2)}
+.pace-note{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--graphite-2);margin-top:5px;line-height:1.5}
+
+/* signature: dimension string */
+.dimwrap{padding:16px 18px 6px;background:var(--panel);
+  border:1px solid var(--rule);border-bottom:0;border-radius:10px 10px 0 0}
+.dimcap{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--graphite-2);margin-bottom:12px}
+.iso3d{
+  position:relative;width:100%;height:400px;border-radius:4px;overflow:hidden;
+  background:var(--page);
+  border:1px solid var(--rule);
+}
+#isosvg{width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
+.leg{display:flex;flex-wrap:wrap;gap:5px 20px;padding:10px 18px 15px;margin-top:-11px;
+  background:var(--panel);border:1px solid var(--rule);border-top:0;border-radius:0 0 10px 10px}
+.leg-i{display:flex;align-items:center;gap:7px;font-family:"IBM Plex Mono",monospace;font-size:11px}
+.leg-s{width:15px;height:9px;border:1px solid var(--graphite)}
+
+/* schedule table */
+.tbl-wrap{overflow-x:auto;flex:1;display:flex;flex-direction:column;
+  background:var(--panel);border:1px solid var(--rule);border-radius:10px}
+table{width:100%;height:100%;border-collapse:collapse;font-family:"IBM Plex Mono",monospace;font-size:12px}
+tbody tr{height:1px}
+caption{
+  text-align:left;padding:13px 22px 9px;font-family:"IBM Plex Mono",monospace;
+  font-size:9.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--graphite-2);
+}
+th,td{padding:6px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child{text-align:left;padding-left:22px}
+td:last-child,th:last-child{padding-right:22px}
+thead th{
+  font-weight:600;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--graphite-2);border-bottom:1.5px solid var(--graphite);
+}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:rgba(255,255,255,.045)}
+tbody td:last-child{color:var(--accent)}
+tbody tr[data-hl="1"]{background:rgba(196,229,56,.07)}
+tbody tr[data-hl="1"] td{font-weight:600;color:var(--accent)}
+tbody tr[data-sel="1"]{background:rgba(45,212,191,.13)}
+tbody tr[data-sel="1"] td{font-weight:600}
+tbody tr[data-hl="1"][data-sel="1"]{background:linear-gradient(90deg,rgba(196,229,56,.07),rgba(45,212,191,.13))}
+td.num{font-variant-numeric:tabular-nums}
+tfoot td{border-bottom:0;border-top:1.5px solid var(--graphite);font-weight:600}
+
+/* income panel */
+.inc{padding:15px 20px 18px;background:var(--panel);border:1px solid var(--rule);border-radius:10px}
+.inc-h{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--graphite-2);margin-bottom:11px}
+.inc-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:9px;background:transparent;border:0}
+.inc-c{background:var(--panel-2);border:1px solid var(--rule);border-radius:8px;padding:11px 13px}
+.inc-c:first-child .inc-v{color:var(--accent)}
+.inc-k{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--graphite-2)}
+.inc-v{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums;margin-top:1px}
+.inc-c[data-tot="1"]{background:rgba(196,229,56,.06);border-color:rgba(196,229,56,.55);box-shadow:0 0 16px rgba(196,229,56,.10)}
+.inc-c[data-tot="1"] .inc-k{color:var(--accent)}
+.inc-c[data-tot="1"] .inc-v{color:var(--accent)}
+.inc-f{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--graphite-2);margin-top:11px;line-height:1.55}
+
+/* scenarios */
+.scn{padding:14px 16px 16px;background:var(--panel);border:1px solid var(--rule);border-radius:10px}
+.scn-h{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--graphite-2);margin-bottom:9px}
+.scn-row{display:flex;gap:7px;flex-wrap:wrap}
+.scn-row input[type=text]{
+  flex:1;min-width:110px;background:var(--panel);border:1px solid var(--graphite);
+  padding:6px 9px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--graphite);
+}
+.scn-row input[type=text]:focus-visible{outline:2px solid var(--dim);outline-offset:-2px}
+.btn{
+  background:var(--graphite);color:var(--panel);border:1px solid var(--graphite);
+  padding:6px 13px;cursor:pointer;font-family:"IBM Plex Mono",monospace;
+  font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+}
+.btn:hover{background:var(--graphite-2)}
+.btn:focus-visible{outline:2px solid var(--dim);outline-offset:2px}
+.btn[data-alt="1"]{background:var(--panel);color:var(--graphite)}
+.btn[data-alt="1"]:hover{background:var(--sheet)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{
+  display:flex;align-items:center;gap:0;border:1px solid var(--graphite);background:var(--panel);
+}
+.chip button{background:none;border:0;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:11px;padding:5px 9px;color:var(--graphite)}
+.chip button:first-child{border-right:1px solid var(--rule)}
+.chip button:hover{background:var(--sheet)}
+.chip button:last-child{color:var(--revision);font-weight:600;padding:5px 8px}
+.msg{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--graphite-2);margin-top:9px;min-height:15px}
+
+/* ===== per-field date log ===== */
+.f-logwrap{margin-top:6px;border-left:2px solid var(--rule);padding-left:8px}
+.f-logtoggle{
+  width:100%;text-align:left;background:none;border:0;padding:4px 2px;cursor:pointer;
+  font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--dim);display:flex;align-items:center;gap:6px;
+}
+.f-logtoggle:hover{color:var(--accent)}
+.f-logtoggle .chev{font-size:9px;transition:transform .15s}
+.f-logtoggle[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.f-logpanel{margin-top:5px;padding:9px 10px;border:1px solid var(--rule);background:var(--panel-2)}
+.f-logrow{display:flex;align-items:center;gap:7px;padding:5px 0}
+.f-logrow + .f-logrow{border-top:1px solid var(--rule)}
+.f-logdate{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--graphite-2);width:82px;flex:none}
+.f-logunit{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--graphite-2);flex:none}
+.f-logval{
+  flex:1;min-width:0;background:var(--panel);border:1px solid var(--rule);color:var(--graphite);
+  font-family:"IBM Plex Mono",monospace;font-size:12px;padding:5px 7px;text-align:right;-moz-appearance:textfield;
+}
+.f-logval:focus{outline:none;border-color:var(--accent)}
+.f-logval::-webkit-outer-spin-button,.f-logval::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.f-logdel{background:none;border:0;color:var(--revision);font-weight:700;cursor:pointer;font-size:13px;padding:0 2px;flex:none}
+.f-logadd{display:flex;gap:6px;align-items:center;margin-top:7px;padding-top:7px;border-top:1px dashed var(--rule)}
+.f-logadddate{
+  width:132px;background:var(--panel);border:1px solid var(--rule);color:var(--graphite);
+  font-family:"IBM Plex Mono",monospace;font-size:11px;padding:5px 6px;
+}
+.f-logaddbtn{
+  background:none;border:1px solid var(--dim);color:var(--dim);font-family:"IBM Plex Mono",monospace;
+  font-size:10.5px;padding:5px 9px;cursor:pointer;text-transform:uppercase;letter-spacing:.05em;
+}
+.f-logaddbtn:hover{background:var(--dim);color:var(--panel)}
+.f-logempty{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--graphite-2);font-style:italic;padding:2px 0 6px}
+
+@media (max-width:860px){
+  body{padding:8px;background-size:18px 18px}
+  .body{grid-template-columns:1fr}
+  .inputs{border-right:0;border-bottom:1.5px solid var(--graphite);order:2}
+  .results{order:1}
+  .titleblock{grid-template-columns:1fr}
+  .tb-meta{border-left:0;border-top:1.5px solid var(--graphite);grid-template-rows:none;grid-template-columns:repeat(3,1fr)}
+  .tb-cell{border-bottom:0;border-right:1px solid var(--rule)}
+  .tb-cell:last-child{border-right:0}
+  th:first-child,td:first-child{padding-left:14px}
+  td:last-child,th:last-child{padding-right:14px}
+  caption,.headline,.dimwrap,.inc,.leg{padding-left:14px;padding-right:14px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="titleblock">
+    <div class="tb-main">
+      <svg class="tb-moon" viewBox="0 0 220 100" preserveAspectRatio="xMaxYMid meet" aria-hidden="true">
+        <defs>
+          <filter id="moonGlow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="4.5"/>
+          </filter>
+        </defs>
+        <path d="M172,18 A27,27 0 1,0 172,72 A19,19 0 1,1 172,18 Z" fill="var(--accent)" opacity="0.85" filter="url(#moonGlow)"/>
+        <path d="M172,18 A27,27 0 1,0 172,72 A19,19 0 1,1 172,18 Z" fill="var(--accent)"/>
+        <circle cx="172" cy="45" r="29" fill="none" stroke="var(--accent)" stroke-width="0.6" opacity="0.22"/>
+        <circle cx="148" cy="18" r="1.3" fill="var(--graphite)" opacity="0.55"/>
+        <circle cx="126" cy="52" r="1" fill="var(--graphite)" opacity="0.4"/>
+        <circle cx="104" cy="28" r="1.2" fill="var(--graphite)" opacity="0.45"/>
+      </svg>
+      <h1 class="tb-title">Retirement<br>Tracker</h1>
+    </div>
+    <div class="tb-meta">
+      <div class="tb-cell"><span class="tb-k">Retire</span><span class="tb-v" id="m-year">2042</span></div>
+      <div class="tb-cell"><span class="tb-k">Age</span><span class="tb-v" id="m-age">60</span></div>
+      <div class="tb-cell"><span class="tb-k">Return</span><span class="tb-v" id="m-ret">12.0%</span></div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- ============ INPUTS ============ -->
+    <div class="inputs">
+
+      <section class="grp" data-open="1">
+        <button class="grp-h" data-t><span class="grp-icon" style="--ic:#C4E538"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.5V8l2.6 1.6"/></svg></span>Timing &amp; Markets<span class="grp-tri">▾</span></button>
+        <div class="grp-b">
+          <div class="f">
+            <div class="f-top"><span class="f-l">Retirement Year</span><span class="f-v"><input class="f-in" id="v-retire" type="number" min="2036.01" max="2052.11" step="0.01"></span></div>
+            <input type="range" id="retire" min="0" max="186" step="any" value="69">
+          </div>
+          <div class="f">
+            <div class="f-top"><span class="f-l">Annual Return</span><span class="f-v"><input class="f-in" id="v-rate" type="number" min="4" max="15" step="0.1">%</span></div>
+            <input type="range" id="rate" min="4" max="15" step="any" value="12">
+          </div>
+          <div class="f">
+            <div class="f-top"><span class="f-l">Withdrawal Rate</span><span class="f-v"><input class="f-in" id="v-wd" type="number" min="2" max="7" step="0.01">%</span></div>
+            <input type="range" id="wd" min="2" max="7" step="any" value="4">
+          </div>
+          <div class="f">
+            <div class="f-top"><span class="f-l">Hours Worked Each Year</span><span class="f-v"><input class="f-in" id="v-hours" type="number" min="1400" max="2400" step="1"></span></div>
+            <input type="range" id="hours" min="1400" max="2400" step="any" value="1959">
+          </div>
+        </div>
+      </section>
+
+      <section class="grp" data-open="1">
+        <button class="grp-h" data-t><span class="grp-icon" style="--ic:#C4E538"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M8 1.6 13 3.4v4.3c0 3.6-2.2 5.9-5 6.7-2.8-.8-5-3.1-5-6.7V3.4z"/></svg></span>401(a) Plan<span class="grp-tri">▾</span></button>
+        <div class="grp-b">
+          <div class="f">
+            <div class="f-top"><span class="f-l">Current Balance</span><span class="f-v">$<input class="f-in" id="v-bal" type="text" inputmode="decimal"></span></div>
+            <input type="range" id="bal" min="0" max="150000" step="any" value="41166">
+          </div>
+          <div class="f">
+            <div class="f-top"><span class="f-l">Elective Rate Now</span><span class="f-v">$<input class="f-in" id="v-elec" type="text" inputmode="decimal">/hr</span></div>
+            <input type="range" id="elec" min="1" max="12" step="any" value="5">
+          </div>
+          <div class="f">
+            <div class="f-top"><span class="f-l">Step-Up Each July</span><span class="f-v">$<input class="f-in" id="v-step" type="text" inputmode="decimal">/hr</span></div>
+            <input type="range" id="step" min="0" max="4" step="any" value="2">
+          </div>
+          <div class="f">
+            <div class="f-top"><span class="f-l">Employer Contribution</span><span class="f-v" id="v-empr">$1.00/hr</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grp" data-open="0">
+        <button class="grp-h" data-t><span class="grp-icon" style="--ic:#F59E0B"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 14V7"/><path d="M8 7C8 3 5 2 3 2c0 3 1.5 5 5 5Z"/><path d="M8 9c0-3.2 2.4-4.6 5-4.8.2 3-1.4 5.4-5 4.8Z"/></svg></span>Roth IRAs<span class="grp-tri">▾</span></button>
+        <div class="grp-b">
+          <div class="f">
+            <div class="f-top"><span class="f-l">Spouse Start / Month</span><span class="f-v">$<input class="f-in" id="v-wm" type="text" inputmode="decimal"></span></div>
+            <input type="range" id="wm" min="0" max="700" step="any" value="150">
+          </div>
+          <div class="f">
+            <div class="f-top"><span class="f-l">Spouse July Step-Up</span><span class="f-v">$<input class="f-in" id="v-wstep" type="text" inputmode="decimal"></span></div>
+            <input type="range" id="wstep" min="0" max="400" step="any" value="150">
+          </div>
+          <div class="f">
+            <div class="f-top"><span class="f-l">Annual Roth Limit (50+)</span><span class="f-v">$<input class="f-in" id="v-rcap" type="text" inputmode="decimal"></span></div>
+            <input type="range" id="rcap" min="6000" max="14000" step="any" value="8000">
+          </div>
+        </div>
+      </section>
+
+      <section class="grp" data-open="0">
+        <button class="grp-h" data-t><span class="grp-icon" style="--ic:#2DD4BF"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="2" y="5.5" width="12" height="8" rx="1.2"/><path d="M6 5.5V4a1.2 1.2 0 0 1 1.2-1.2h1.6A1.2 1.2 0 0 1 10 4v1.5"/><path d="M2 9h12"/></svg></span>SEP<span class="grp-tri">▾</span></button>
+        <div class="grp-b">
+          <div class="f">
+            <div class="f-top"><span class="f-l">Spouse Net Business Income</span><span class="f-v">$<input class="f-in" id="v-sinc" type="text" inputmode="decimal"></span></div>
+            <input type="range" id="sinc" min="0" max="250000" step="any" value="100000">
+          </div>
+          <div class="f">
+            <div class="f-top"><span class="f-l">SEP Ceiling (25% Of Income)</span><span class="f-v" id="v-sepcap">$25,000</span></div>
+            <input type="range" id="seppct" min="0" max="25" step="any" value="25">
+          </div>
+        </div>
+      </section>
+
+      <section class="grp" data-open="0">
+        <button class="grp-h" data-t><span class="grp-icon" style="--ic:#A855F7"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12 6 7.5l3 2.5 5-6"/><path d="M11 3.5h3V6.5"/></svg></span>Brokerage<span class="grp-tri">▾</span></button>
+        <div class="grp-b">
+          <div class="f">
+            <div class="f-top"><span class="f-l">Marginal Tax On Overflow</span><span class="f-v"><input class="f-in" id="v-tax" type="number" min="0" max="50" step="0.1">%</span></div>
+            <input type="range" id="tax" min="0" max="50" step="any" value="33.3">
+          </div>
+          <div class="f">
+            <div class="f-top"><span class="f-l">Brokerage Tax Drag</span><span class="f-v"><input class="f-in" id="v-drag" type="number" min="0" max="3" step="0.1">%</span></div>
+            <input type="range" id="drag" min="0" max="3" step="any" value="1.8">
+          </div>
+        </div>
+      </section>
+
+      <section class="grp" data-open="0">
+        <button class="grp-h" data-t><span class="grp-icon" style="--ic:#7E97A3"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M1.5 5 8 1.6 14.5 5"/><path d="M2.5 5h11v1.4h-11z"/><path d="M3.5 6.5v6M6.5 6.5v6M9.5 6.5v6M12.5 6.5v6"/><path d="M2 13.5h12"/></svg></span>Pension<span class="grp-tri">▾</span></button>
+        <div class="grp-b">
+          <div class="f">
+            <div class="f-top"><span class="f-l">Pension, Single Life</span><span class="f-v">$<input class="f-in" id="v-pen" type="text" inputmode="decimal">/mo</span></div>
+            <input type="range" id="pen" min="0" max="10000" step="any" value="5511">
+          </div>
+          <div class="f">
+            <div class="f-top"><span class="f-l">Survivor Benefit Reduction</span><span class="f-v"><input class="f-in" id="v-surv" type="number" min="0" max="25" step="1">%</span></div>
+            <input type="range" id="surv" min="0" max="25" step="any" value="0">
+          </div>
+        </div>
+      </section>
+
+      <section class="grp" data-open="0">
+        <button class="grp-h" data-t><span class="grp-icon" style="--ic:#C4E538"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="1.6" y="3" width="12.8" height="10" rx="1.3"/><circle cx="5.2" cy="7" r="1.4" fill="currentColor" stroke="none"/><path d="M2.8 11.2c.4-1.4 1.4-2.1 2.4-2.1s2 .7 2.4 2.1"/><path d="M9.4 6h3.2M9.4 8.4h3.2"/></svg></span>Social Security<span class="grp-tri">▾</span></button>
+        <div class="grp-b">
+          <div class="f">
+            <div class="f-top"><span class="f-l">Your SS</span><span class="f-v">$<input class="f-in" id="v-ss67" type="text" inputmode="decimal">/mo</span></div>
+            <input type="range" id="ss67" min="0" max="6000" step="any" value="3503">
+          </div>
+          <div class="f">
+            <div class="f-top"><span class="f-l">Your Claim Age</span><span class="f-v"><input class="f-in" id="v-ssageYou" type="number" min="62.01" max="70.12" step="0.01"></span></div>
+            <input type="range" id="ssageYou" min="0" max="107" step="any" value="60">
+          </div>
+          <div class="f">
+            <div class="f-top"><span class="f-l">Spouse SS</span><span class="f-v">$<input class="f-in" id="v-wss" type="text" inputmode="decimal">/mo</span></div>
+            <input type="range" id="wss" min="0" max="4000" step="any" value="1279">
+          </div>
+          <div class="f">
+            <div class="f-top"><span class="f-l">Spouse Claim Age</span><span class="f-v"><input class="f-in" id="v-ssageSpouse" type="number" min="62.01" max="70.12" step="0.01"></span></div>
+            <input type="range" id="ssageSpouse" min="0" max="107" step="any" value="60">
+          </div>
+        </div>
+      </section>
+
+      <div class="scn">
+        <div class="scn-h">Saved scenarios</div>
+        <div class="scn-row">
+          <input type="text" id="scn-name" placeholder="Name this scenario" maxlength="28">
+          <button class="btn" id="scn-save">Save</button>
+          <button class="btn" data-alt="1" id="scn-reset">Reset</button>
+        </div>
+        <div class="chips" id="chips"></div>
+        <div class="msg" id="msg"></div>
+      </div>
+    </div>
+
+    <!-- ============ RESULTS ============ -->
+    <div class="results">
+
+      <div class="headline">
+        <div class="hl-k">Total at retirement</div>
+        <div class="hl-v" id="hl-total">$0</div>
+        <div class="hl-note" id="hl-note"></div>
+      </div>
+
+      <div class="pace">
+        <div class="pace-gauge-wrap">
+          <svg id="pacegauge" viewBox="0 0 160 92" role="img" aria-label="Pace gauge"></svg>
+          <div class="pace-v flat" id="pace-v">—</div>
+        </div>
+        <div class="pace-body">
+          <div class="pace-k" id="pace-k">Pace Check — Current Balance Vs Goal</div>
+          <div class="pace-note" id="pace-note">Log at least two years of Current Balance to see your pace.</div>
+        </div>
+      </div>
+
+      <div class="dimwrap">
+        <div class="dimcap" id="dimcap">Portfolio growth & composition</div>
+        <div class="iso3d" id="iso3d">
+          <svg id="isosvg" role="img" aria-labelledby="isotitle"><title id="isotitle">Isometric 3D chart of account balances growing year by year</title></svg>
+        </div>
+      </div>
+      <div class="leg" id="leg"></div>
+
+      <div class="inc">
+        <div class="inc-h">Monthly income at retirement</div>
+        <div class="inc-g" id="inc-g"></div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <caption>Balances by milestone age</caption>
+          <thead>
+            <tr>
+              <th scope="col">Age / year</th>
+              <th scope="col">401(a)</th>
+              <th scope="col">Spouse Roth</th>
+              <th scope="col">Your Roth</th>
+              <th scope="col">SEP</th>
+              <th scope="col">Brokerage</th>
+              <th scope="col">Total</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* When opened in a normal browser (no Claude storage bridge), persist
+   scenarios in localStorage; fall back to in-memory if that's blocked. */
+if (typeof window.storage === "undefined"){
+  const mem = {};
+  const LS = (() => { try { localStorage.setItem("__t","1"); localStorage.removeItem("__t"); return localStorage; }
+    catch(e){ return null; } })();
+  window.storage = {
+    get:    async k => { const v = LS ? LS.getItem(k) : mem[k]; return (v === null || v === undefined) ? null : {value:v}; },
+    set:    async (k,v) => { if (LS) LS.setItem(k,v); else mem[k] = v; },
+    delete: async k => { if (LS) LS.removeItem(k); else delete mem[k]; }
+  };
+}
+
+const BASE_YEAR = 2026;
+const AGE_AT_BASE = 44;        // your age entering 2026
+const SPOUSE_OFFSET = 2;       // rough whole-year gap, used only for the 50+ Roth catch-up check during accumulation
+const CAP_CEILING = 11;        // plan's max elective $/hr into the 401(a); overflow above this redirects elsewhere
+
+/* Real birthdates, month precision (matches the year.month convention used for
+   Retirement Year and SS claim age) — this is what actually drives Social
+   Security eligibility, since "yourAge + a rough offset" isn't precise enough
+   to tell whether each of you has truly reached your own chosen claim age. */
+const YOUR_BIRTH   = { year: 1981, month: 10 };  // Oct 11, 1981
+const SPOUSE_BIRTH = { year: 1979, month: 7 };   // Jul 22, 1979
+const ageAtYM = (birth, year, month) => (year - birth.year) + (month - birth.month) / 12;
+/* Ridge order is back-to-front in the terrain field: largest account sits at the
+   back so the surface reads as receding depth rather than a wall. */
+const ACCOUNTS = [
+  {k:"p401", label:"401(a)",      fill:"#E8F0E8"},  // white
+  {k:"wroth",label:"Spouse Roth", fill:"#2DD4BF"},  // teal
+  {k:"droth",label:"Your Roth",   fill:"#C4E538"},  // chartreuse
+  {k:"sep",  label:"SEP IRA",     fill:"#A855F7"},  // violet
+  {k:"brok", label:"Brokerage",   fill:"#F59E0B"}   // amber
+];
+
+const DEFAULTS = {
+  retire:2042.04, rate:12, wd:4, hours:1959,
+  bal:41166, elec:5, step:2, empr:1,
+  wm:150, wstep:150, rcap:8000,
+  sinc:100000, seppct:25, tax:33.3, drag:1.8,
+  pen:5511, surv:0, ss67:3503, ssageYou:67.01, wss:1279, ssageSpouse:67.01
+};
+
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+/* "year.month" convention used by Retirement Year and the SS claim ages: the two-digit
+   decimal is the calendar month, .01 = January … .12 = December. */
+function decodeYM(v){
+  const year = Math.floor(v);
+  const month = Math.min(12, Math.max(1, Math.round((v - year) * 100) || 1));
+  return { year, month };
+}
+
+/* Retirement Year only ever lands on .01–.11 — no other decimal has a real-world
+   meaning, so the slider moves over a smooth INDEX of valid (year, month) states
+   rather than the raw year.month number; the box always shows the real year.month. */
+const RETIRE_MONTHS = 11;
+const RETIRE_MIN_YEAR = 2036, RETIRE_MAX_YEAR = 2052;
+const RETIRE_MAX_INDEX = (RETIRE_MAX_YEAR - RETIRE_MIN_YEAR) * RETIRE_MONTHS + (RETIRE_MONTHS - 1);
+
+function decodeRetireYM(v){
+  const year = Math.min(RETIRE_MAX_YEAR, Math.max(RETIRE_MIN_YEAR, Math.floor(v)));
+  const month = Math.min(RETIRE_MONTHS, Math.max(1, Math.round((v - Math.floor(v)) * 100) || 1));
+  return { year, month };
+}
+const retireValue = (year, month) => year + month/100;
+const retireIndexOf = v => {
+  const { year, month } = decodeRetireYM(v);
+  return (year - RETIRE_MIN_YEAR) * RETIRE_MONTHS + (month - 1);
+};
+const retireValueOfIndex = idx => {
+  idx = Math.max(0, Math.min(RETIRE_MAX_INDEX, Math.round(idx)));
+  const year = RETIRE_MIN_YEAR + Math.floor(idx / RETIRE_MONTHS);
+  const month = 1 + (idx % RETIRE_MONTHS);
+  return retireValue(year, month);
+};
+
+/* Your Claim Age and Spouse Claim Age use the same smooth-index mechanism as
+   Retirement Year — full 12 months (.01–.12), since there's no reason to
+   exclude a month from Social Security claiming the way there is for retiring. */
+const SSAGE_MONTHS = 12;
+const SSAGE_MIN_AGE = 62, SSAGE_MAX_AGE = 70;
+const SSAGE_MAX_INDEX = (SSAGE_MAX_AGE - SSAGE_MIN_AGE) * SSAGE_MONTHS + (SSAGE_MONTHS - 1);
+
+function decodeSSAgeYM(v){
+  const year = Math.min(SSAGE_MAX_AGE, Math.max(SSAGE_MIN_AGE, Math.floor(v)));
+  const month = Math.min(SSAGE_MONTHS, Math.max(1, Math.round((v - Math.floor(v)) * 100) || 1));
+  return { year, month };
+}
+const ssAgeValue = (year, month) => year + month/100;
+const ssAgeIndexOf = v => {
+  const { year, month } = decodeSSAgeYM(v);
+  return (year - SSAGE_MIN_AGE) * SSAGE_MONTHS + (month - 1);
+};
+const ssAgeValueOfIndex = idx => {
+  idx = Math.max(0, Math.min(SSAGE_MAX_INDEX, Math.round(idx)));
+  const year = SSAGE_MIN_AGE + Math.floor(idx / SSAGE_MONTHS);
+  const month = 1 + (idx % SSAGE_MONTHS);
+  return ssAgeValue(year, month);
+};
+
+let S = Object.assign({}, DEFAULTS);
+
+const $ = id => document.getElementById(id);
+const money = n => "$" + Math.round(n).toLocaleString("en-US");
+const moneyK = n => n >= 1e6
+  ? "$" + (n/1e6).toFixed(2) + "M"
+  : "$" + Math.round(n/1000).toLocaleString("en-US") + "K";
+
+/* ---------- projection engine ---------- */
+function project(s){
+  const H = s.hours, halfH = H/2;
+  const { year: retireYearInt, month: retireMonth } = decodeRetireYM(s.retire);
+  const retirePartial = retireMonth / 12;
+  const endYear = BASE_YEAR + (75 - AGE_AT_BASE);
+  const r = s.rate/100;
+  const rBrok = Math.max(0, r - s.drag/100);
+  const sepCeiling = s.sinc * (s.seppct/100);
+  const taxKeep = 1 - s.tax/100;
+
+  // uncapped elective rate for a given year+half
+  const uncapped = (y, half) => {
+    if (y === BASE_YEAR && half === 1) return Math.max(0, s.elec - s.step);
+    const steps = half === 2 ? (y - BASE_YEAR) : (y - 1 - BASE_YEAR);
+    return s.elec + s.step * steps;
+  };
+
+  // spouse Roth uncapped calendar contribution
+  const wifeRaw = y => {
+    const rate = half => {
+      const steps = half === 2 ? (y - BASE_YEAR - 1) : (y - BASE_YEAR - 2);
+      return s.wm + s.wstep * Math.max(0, steps + 1);
+    };
+    if (y === BASE_YEAR) return 500 + 6 * s.wm;
+    return rate(1)*6 + rate(2)*6;
+  };
+
+  let b = {p401:s.bal, wroth:0, droth:0, sep:0, brok:0};
+  const snap = {};
+  const contribTotals = {p401:0, wroth:0, droth:0, sep:0, brok:0};
+
+  for (let y = BASE_YEAR; y <= endYear; y++){
+    const working = y <= retireYearInt;
+    const partial = (y === retireYearInt) ? retirePartial : 1;
+    const yourAge = AGE_AT_BASE + (y - BASE_YEAR);
+    const spouseAge = yourAge + SPOUSE_OFFSET;
+
+    let c401 = 0, redirect = 0;
+    if (working){
+      const halves = (y === retireYearInt) ? [1] : [1,2];
+      for (const hf of halves){
+        const hrs = (y === retireYearInt) ? H*partial : halfH;
+        const u = uncapped(y, hf);
+        c401 += (Math.min(u, CAP_CEILING) + s.empr) * hrs;
+        redirect += Math.max(0, u - CAP_CEILING) * hrs;
+      }
+    }
+
+    const rothLimit = a => a >= 50 ? s.rcap : s.rcap - 1000;
+    const wRaw = working ? wifeRaw(y) * partial : 0;
+    const wC   = Math.min(wRaw, rothLimit(spouseAge) * partial);
+    const dC   = Math.min(redirect, rothLimit(yourAge) * partial);
+
+    const overflow = Math.max(0, wRaw - wC) + Math.max(0, redirect - dC);
+    const sepC  = Math.min(overflow, sepCeiling * partial);
+    const brokC = Math.max(0, overflow - sepC) * taxKeep;
+
+    const grow = (bal, add, rr) => {
+      if (y === retireYearInt) return bal * (1 + rr*partial) + add;
+      return bal * (1 + rr) + add * (1 + rr/2);
+    };
+    b = {
+      p401 : grow(b.p401,  c401, r),
+      wroth: grow(b.wroth, wC,   r),
+      droth: grow(b.droth, dC,   r),
+      sep  : grow(b.sep,   sepC, r),
+      brok : grow(b.brok,  brokC, rBrok)
+    };
+    contribTotals.p401 += c401; contribTotals.wroth += wC;
+    contribTotals.droth += dC;  contribTotals.sep  += sepC;
+    contribTotals.brok += brokC;
+
+    snap[yourAge] = {year:y, ...b, total:b.p401+b.wroth+b.droth+b.sep+b.brok};
+  }
+  return {snap, contribTotals, retireAge: AGE_AT_BASE + (retireYearInt - BASE_YEAR), sepCeiling, retireMonth, retireYearInt};
+}
+
+/* Decodes a year.month-encoded value (retirement year or SS claim age) into a
+   true fractional number — month 1 = no offset, month 12 = 11/12 through the year. */
+function trueYM(v){
+  const { year, month } = decodeYM(v);
+  return year + (month - 1) / 12;
+}
+
+/* Continuous SS adjustment off the FRA (67) benefit. Early: −6.667%/yr for the
+   first 3 yrs, then −5%/yr (age 62 = −30%). Delayed: +8%/yr to age 70 (= +24%).
+   Claim age uses the same "year.month" convention as Retirement Year (.01=Jan … .12=Dec). */
+function ssFactor(v){
+  const age = trueYM(v);
+  const fra = 67;
+  if (age >= fra) return 1 + Math.min(age - fra, 3) * 0.08;
+  const early = fra - age;
+  const first = Math.min(early, 3);
+  const extra = Math.max(0, early - 3);
+  return Math.max(0, 1 - first*0.066667 - extra*0.05);
+}
+
+/* ---------- render ---------- */
+function render(){
+  const {snap, contribTotals, retireAge, retireMonth, retireYearInt} = project(S);
+  const atRetire = snap[retireAge];
+  if (!atRetire) return;
+
+  $("m-year").textContent = retireYearInt;
+  $("m-age").textContent  = retireAge;
+  $("m-ret").textContent  = S.rate.toFixed(1) + "%";
+
+  $("hl-total").textContent = money(atRetire.total);
+  const totalContrib = Object.values(contribTotals).reduce((a,c)=>a+c,0);
+  const growth = atRetire.total - totalContrib - S.bal;
+  $("hl-note").textContent =
+    `Age ${retireAge} in ${MONTH_NAMES[retireMonth-1]} ${retireYearInt} · ${money(totalContrib)} contributed · ${money(Math.max(0,growth))} growth`;
+
+  drawTerrain(snap, retireAge, atRetire);
+  drawLegend(atRetire);
+  drawIncome(atRetire, retireAge, retireMonth, retireYearInt);
+  drawTable(snap, retireAge);
+}
+
+/* colour helpers: shade() lightens/darkens a hex colour, lerpColor() sweeps between two */
+function shade(hex, pct){
+  const n = parseInt(hex.slice(1), 16);
+  const amt = Math.round(2.55 * pct);
+  let r = (n >> 16) + amt, g = ((n >> 8) & 0xFF) + amt, b = (n & 0xFF) + amt;
+  r = Math.max(0, Math.min(255, r)); g = Math.max(0, Math.min(255, g)); b = Math.max(0, Math.min(255, b));
+  return "#" + (0x1000000 + r*0x10000 + g*0x100 + b).toString(16).slice(1);
+}
+function lerpColor(c1, c2, t){
+  const p1 = parseInt(c1.slice(1),16), p2 = parseInt(c2.slice(1),16);
+  const r1=p1>>16, g1=(p1>>8)&255, b1=p1&255, r2=p2>>16, g2=(p2>>8)&255, b2=p2&255;
+  const r=Math.round(r1+(r2-r1)*t), g=Math.round(g1+(g2-g1)*t), b=Math.round(b1+(b2-b1)*t);
+  return "#" + (0x1000000 + r*0x10000 + g*0x100 + b).toString(16).slice(1);
+}
+/* Catmull-Rom sampler — lets us read a smooth value anywhere between two yearly
+   data points, so the wave is drawn from ~150 fine slices instead of one per year,
+   which is what makes it read as an organic curve rather than a coarse zigzag. */
+function sampleCR(vals, t){
+  const n = vals.length;
+  const i = Math.max(0, Math.min(n-1, Math.floor(t)));
+  const f = t - i;
+  const p0 = vals[Math.max(0, i-1)], p1 = vals[i];
+  const p2 = vals[Math.min(n-1, i+1)], p3 = vals[Math.min(n-1, i+2)];
+  return 0.5 * ((2*p1) + (-p0+p2)*f + (2*p0-5*p1+4*p2-p3)*f*f + (-p0+3*p1-3*p2+p3)*f*f*f);
+}
+
+/* ============ ELEVATION FIELD ============
+   Each account is a ridge: a Catmull-Rom-smoothed elevation profile of its balance
+   over time, rendered as several hundred thin vertical lines whose stroke luminance
+   falls off with depth — so the surface reads as a lit volumetric field rather than
+   a filled shape. Ridges sit on a receding ground plane (farther ridges inset,
+   raised and foreshortened) and draw back-to-front so nearer ridges occlude farther
+   ones. All ridges share one vertical scale, so their heights stay comparable.
+   The combs are emitted as a single path per ridge (thousands of subpaths, five DOM
+   nodes) — drawing one element per line would stall the slider. */
+function drawTerrain(snap, retireAge, atRetire){
+  const svg = $("isosvg");
+  if (!svg) return;
+  const W = Math.max(360, svg.clientWidth || 700), H = 400;
+  const NS = "http://www.w3.org/2000/svg";
+  const cs = getComputedStyle(document.documentElement);
+  const ink   = cs.getPropertyValue("--graphite").trim()   || "#E2ECF1";
+  const ink2  = cs.getPropertyValue("--graphite-2").trim() || "#7A8C99";
+  const rule  = cs.getPropertyValue("--rule").trim()       || "#22303C";
+  const emer  = cs.getPropertyValue("--verify").trim()     || "#34D399";
+  const page  = cs.getPropertyValue("--page").trim()       || "#090C10";
+  const panel = cs.getPropertyValue("--panel").trim()      || "#0D120E";
+  svg.innerHTML = "";
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+  const el = (n,at) => { const e = document.createElementNS(NS,n);
+    for (const k in at) e.setAttribute(k, at[k]); return e; };
+
+  const ages = [];
+  for (let age = AGE_AT_BASE; age <= retireAge; age++) if (snap[age]) ages.push(age);
+  if (ages.length < 2) return;
+  const yearOf = age => BASE_YEAR + (age - AGE_AT_BASE);
+  const last = ages.length - 1;
+
+  const defs = el("defs", {});
+  const glow = el("filter", {id:"tGlow", x:"-25%", y:"-25%", width:"150%", height:"150%"});
+  glow.appendChild(el("feGaussianBlur", {stdDeviation:"3"}));
+  defs.appendChild(glow);
+  const glowW = el("filter", {id:"tGlowWide", x:"-40%", y:"-40%", width:"180%", height:"180%"});
+  glowW.appendChild(el("feGaussianBlur", {stdDeviation:"9"}));
+  defs.appendChild(glowW);
+  svg.appendChild(defs);
+
+  const title = el("title", {id:"isotitle"});
+  title.textContent = "Elevation field — one ridge per account, balance over time";
+  svg.appendChild(title);
+
+  /* ---- ground-plane geometry ---- */
+  const padL = 26, padR = 24, padTop = 34, padBottom = 40;
+  const plotW = W - padL - padR, plotH = H - padTop - padBottom;
+  const nL = ACCOUNTS.length;
+  const skew   = plotW * 0.13;                    // horizontal recession of far ridges
+  const ridgeH = plotH * 0.70;                    // tall ridges, heavily overlapped
+  const rowGap = (plotH - ridgeH)/(nL-1);         // baseline separation between ridges
+  const xR = W - padR;
+  const rowX0    = j => padL + (1 - j/(nL-1))*skew;
+  const rowScale = j => 0.84 + 0.16*(j/(nL-1));   // far ridges foreshortened
+  const rowBase  = j => padTop + ridgeH + rowGap*j;
+
+  /* One shared vertical (Z) scale across every ridge, so height is an honest
+     read of dollar value — a $1.2M ridge towers over a $98K one, not the other
+     way of flattening everything to the same peak. Each ridge still carries its
+     own dollar label so the real numbers stay legible even when a ridge is short. */
+  const peakOf = m => Math.max(1, ...ages.map(a => snap[a][m.k]));
+  const maxVal = Math.max(1, ...ACCOUNTS.map(peakOf));
+  const tickStep = ages.length > 12 ? 4 : 2;
+
+  /* ---- receding floor grid ---- */
+  const gridG = el("g", {});
+  for (let i=0; i<=last; i+=tickStep){
+    const t = i/last;
+    const xF = rowX0(nL-1) + t*(xR - rowX0(nL-1));
+    const xB = rowX0(0)    + t*(xR - rowX0(0));
+    gridG.appendChild(el("line", {x1:xF.toFixed(1), y1:rowBase(nL-1).toFixed(1),
+      x2:xB.toFixed(1), y2:rowBase(0).toFixed(1), stroke:rule, "stroke-width":1, "stroke-opacity":0.5}));
+  }
+  for (let j=0; j<nL; j++){
+    gridG.appendChild(el("line", {x1:rowX0(j).toFixed(1), y1:rowBase(j).toFixed(1),
+      x2:xR, y2:rowBase(j).toFixed(1), stroke:rule, "stroke-width":1, "stroke-opacity":0.85}));
+  }
+  svg.appendChild(gridG);
+
+  /* ---- ridges, back to front ---- */
+  const peakLabels = [];   // collected now, positioned+drawn after the loop so they can't overlap
+  for (let j=0; j<nL; j++){
+    const m = ACCOUNTS[j];
+    const vals = ages.map(a => snap[a][m.k]);
+    const x0 = rowX0(j), w = xR - x0, sc = rowScale(j), base = rowBase(j);
+    const topLimit = base - ridgeH*sc;
+    const N = Math.max(460, Math.min(1000, Math.round(w/0.6)));
+
+    let comb = "", crest = "", any = false, crestEndY = base;
+    for (let s=0; s<=N; s++){
+      const t = s/N;
+      const v = Math.max(0, sampleCR(vals, t*last));
+      const x = x0 + t*w;
+      const y = base - (v/maxVal)*ridgeH*sc;
+      crest += (s ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+      if (base - y > 0.5){ comb += "M" + x.toFixed(1) + " " + base.toFixed(1) + "V" + y.toFixed(1); any = true; }
+      if (s === N) crestEndY = y;
+    }
+    if (!any) continue;
+
+    // occlusion body in page colour, so this ridge hides the ones behind it —
+    // without it the far combs bleed through the gaps between near lines
+    svg.appendChild(el("path", {
+      d: crest + `L${xR.toFixed(1)} ${base.toFixed(1)}L${x0.toFixed(1)} ${base.toFixed(1)}Z`,
+      fill: page, "fill-opacity":0.93 }));
+
+    // luminance falls off downward so crests read lit and valleys recede
+    const gid = `tg-${m.k}`;
+    const grad = el("linearGradient", {id:gid, gradientUnits:"userSpaceOnUse",
+      x1:0, y1:topLimit.toFixed(1), x2:0, y2:base.toFixed(1)});
+    grad.appendChild(el("stop", {offset:"0%",   "stop-color":shade(m.fill, 25),  "stop-opacity":"1"}));
+    grad.appendChild(el("stop", {offset:"30%",  "stop-color":m.fill,             "stop-opacity":"0.68"}));
+    grad.appendChild(el("stop", {offset:"70%",  "stop-color":m.fill,             "stop-opacity":"0.24"}));
+    grad.appendChild(el("stop", {offset:"100%", "stop-color":shade(m.fill,-40),  "stop-opacity":"0.05"}));
+    defs.appendChild(grad);
+
+    svg.appendChild(el("path", {d:comb, fill:"none", stroke:`url(#${gid})`, "stroke-width":0.55}));
+    // stippled overlay: same comb, dashed, so the lower slopes break into points
+    svg.appendChild(el("path", {d:comb, fill:"none", stroke:`url(#${gid})`, "stroke-width":0.9,
+      "stroke-dasharray":"0.6 3.4", "stroke-opacity":0.5}));
+
+    // three-pass crest: wide bloom, tight bloom, then a crisp hairline on top
+    svg.appendChild(el("path", {d:crest, fill:"none", stroke:m.fill, "stroke-width":6, "stroke-opacity":0.16, filter:"url(#tGlowWide)"}));
+    svg.appendChild(el("path", {d:crest, fill:"none", stroke:m.fill, "stroke-width":2.4, "stroke-opacity":0.42, filter:"url(#tGlow)"}));
+    svg.appendChild(el("path", {d:crest, fill:"none", stroke:shade(m.fill,38), "stroke-width":1.1, "stroke-opacity":0.98}));
+
+    const tag = el("text", {x:(x0+3).toFixed(1), y:(base-4).toFixed(1),
+      "font-family":"IBM Plex Mono, monospace", "font-size":"7.5", "letter-spacing":"0.09em",
+      fill:m.fill, "fill-opacity":0.72});
+    tag.textContent = m.label.toUpperCase();
+    svg.appendChild(tag);
+
+    // peak value at the right end — keeps per-ridge normalisation honest.
+    // Collected, not drawn yet: several ridges land close together here, so
+    // positions get de-conflicted in one pass below instead of drawn blind.
+    peakLabels.push({ y: crestEndY - 6, text: moneyK(vals[last]), color: shade(m.fill, 30) });
+  }
+
+  // de-overlap the collected peak labels, then draw each with a solid chip
+  // behind it so it reads clearly against the bright lines instead of cutting into them
+  peakLabels.sort((a,b) => a.y - b.y);
+  const LABEL_GAP = 12.5;
+  for (let i=1; i<peakLabels.length; i++){
+    if (peakLabels[i].y - peakLabels[i-1].y < LABEL_GAP) peakLabels[i].y = peakLabels[i-1].y + LABEL_GAP;
+  }
+  peakLabels.forEach(lb => {
+    const boxW = lb.text.length * 5.4 + 8;
+    svg.appendChild(el("rect", {
+      x:(xR - boxW).toFixed(1), y:(lb.y - 9).toFixed(1), width:boxW.toFixed(1), height:12, rx:2.5,
+      fill:page, "fill-opacity":0.88
+    }));
+    const pk = el("text", {x:(xR-4).toFixed(1), y:lb.y.toFixed(1), "text-anchor":"end",
+      "font-family":"IBM Plex Mono, monospace", "font-size":"8.5", "font-weight":"600", fill:lb.color});
+    pk.textContent = lb.text;
+    svg.appendChild(pk);
+  });
+
+  /* ---- year axis (the reference shows no value axis; each ridge carries its own peak) ---- */
+  const axBase = rowBase(nL-1);
+  for (let i=0; i<last; i+=tickStep){
+    const t = i/last, x = rowX0(nL-1) + t*(xR - rowX0(nL-1));
+    svg.appendChild(el("line", {x1:x.toFixed(1), y1:axBase.toFixed(1), x2:x.toFixed(1), y2:(axBase+5).toFixed(1),
+      stroke:ink2, "stroke-width":1, "stroke-opacity":0.7}));
+    const lb = el("text", {x:x.toFixed(1), y:(axBase+16).toFixed(1), "text-anchor":"middle",
+      "font-family":"IBM Plex Mono, monospace","font-size":"8.5", fill:ink2});
+    lb.textContent = String(yearOf(ages[i]));
+    svg.appendChild(lb);
+  }
+  svg.appendChild(el("line", {x1:xR, y1:axBase.toFixed(1), x2:xR, y2:(axBase+5).toFixed(1),
+    stroke:ink2, "stroke-width":1, "stroke-opacity":0.7}));
+  const lastLb = el("text", {x:xR, y:(axBase+16).toFixed(1), "text-anchor":"end",
+    "font-family":"IBM Plex Mono, monospace","font-size":"8.5", fill:ink});
+  lastLb.textContent = String(yearOf(ages[last]));
+  svg.appendChild(lastLb);
+
+  /* ---- header readouts ---- */
+  const cap = $("dimcap");
+  if (cap) cap.textContent = `Portfolio elevation field — ${yearOf(ages[0])} to ${yearOf(ages[last])}`;
+
+  const tax = atRetire.wroth + atRetire.droth;
+  const taxLbl = el("text", {x:4, y:16, "font-family":"IBM Plex Mono, monospace","font-size":"9.5",
+    fill:emer, "font-weight":"600"});
+  taxLbl.textContent = `TAX-FREE ${moneyK(tax)} (${Math.round(tax/(atRetire.total||1)*100)}%)`;
+  svg.appendChild(taxLbl);
+
+  const totalLbl = el("text", {x:xR, y:19, "text-anchor":"end",
+    "font-family":"Barlow Condensed, sans-serif","font-size":"18","font-weight":"700", fill:ink});
+  totalLbl.textContent = moneyK(atRetire.total);
+  svg.appendChild(totalLbl);
+
+  /* ---- trace: hover/touch anywhere over the field for the exact value at that
+     point on every ridge. The front (unskewed) ridge's span is the time reference;
+     each ridge then reports its own interpolated value at that same instant. */
+  const hoverLayer = el("g", { "pointer-events":"none" });
+  svg.appendChild(hoverLayer);
+  const frontX0 = rowX0(nL-1), frontW = xR - frontX0;
+
+  const showHover = (clientX, clientY) => {
+    const pt = svg.createSVGPoint();
+    pt.x = clientX; pt.y = clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    let t = (loc.x - frontX0) / frontW;
+    t = Math.max(0, Math.min(1, t));
+    const year = yearOf(ages[Math.round(t*last)]);
+    const gx = frontX0 + t*frontW;
+
+    hoverLayer.innerHTML = "";
+    hoverLayer.appendChild(el("line", {x1:gx.toFixed(1), y1:(padTop-2).toFixed(1), x2:gx.toFixed(1), y2:(axBase+2).toFixed(1),
+      stroke:ink, "stroke-width":1, "stroke-opacity":0.3, "stroke-dasharray":"2 3"}));
+
+    const rows = ACCOUNTS.map((m,j) => {
+      const vals = ages.map(a => snap[a][m.k]);
+      const v = Math.max(0, sampleCR(vals, t*last));
+      const x0j = rowX0(j), wj = xR - x0j, scj = rowScale(j), basej = rowBase(j);
+      const xDot = x0j + t*wj, yDot = basej - (v/maxVal)*ridgeH*scj;
+      hoverLayer.appendChild(el("circle", {cx:xDot.toFixed(1), cy:yDot.toFixed(1), r:2.6, fill:m.fill, stroke:page, "stroke-width":1}));
+      return { label:m.label, value:v, color:m.fill };
+    });
+
+    const boxW = 128, boxH = 22 + rows.length*13.5;
+    let bx = gx + 9; if (bx + boxW > W - 2) bx = gx - boxW - 9;
+    const by = padTop - 2;
+    hoverLayer.appendChild(el("rect", {x:bx.toFixed(1), y:by.toFixed(1), width:boxW, height:boxH, rx:5,
+      fill:panel, "fill-opacity":0.97, stroke:rule, "stroke-width":1}));
+    const yl = el("text", {x:(bx+9).toFixed(1), y:(by+15).toFixed(1),
+      "font-family":"IBM Plex Mono, monospace","font-size":"9","font-weight":"600",
+      fill:ink, "letter-spacing":"0.05em"});
+    yl.textContent = String(year);
+    hoverLayer.appendChild(yl);
+    rows.forEach((r,i) => {
+      const ry = by + 29 + i*13.5;
+      hoverLayer.appendChild(el("circle", {cx:(bx+11).toFixed(1), cy:(ry-3).toFixed(1), r:2.4, fill:r.color}));
+      const lt = el("text", {x:(bx+18).toFixed(1), y:ry.toFixed(1),
+        "font-family":"IBM Plex Mono, monospace","font-size":"8", fill:ink2});
+      lt.textContent = r.label;
+      hoverLayer.appendChild(lt);
+      const vt = el("text", {x:(bx+boxW-8).toFixed(1), y:ry.toFixed(1), "text-anchor":"end",
+        "font-family":"IBM Plex Mono, monospace","font-size":"8.5","font-weight":"600", fill:ink});
+      vt.textContent = moneyK(r.value);
+      hoverLayer.appendChild(vt);
+    });
+  };
+  const hideHover = () => { hoverLayer.innerHTML = ""; };
+
+  // assigned as properties (not addEventListener) so each redraw cleanly replaces
+  // the previous handler instead of stacking duplicates
+  svg.onmousemove = e => showHover(e.clientX, e.clientY);
+  svg.onmouseleave = hideHover;
+  svg.ontouchmove = e => { if (e.touches[0]){ showHover(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } };
+  svg.ontouchend = hideHover;
+}
+
+function drawLegend(a){
+  $("leg").innerHTML = ACCOUNTS.map(m =>
+    `<span class="leg-i"><span class="leg-s" style="background:${m.fill}"></span>${m.label}</span>`
+  ).join("");
+}
+
+function drawIncome(a, retireAge, retireMonth, retireYearInt){
+  const draw = a.total * (S.wd/100) / 12;
+  const pension = S.pen * (1 - S.surv/100);
+
+  // real ages at the retirement instant, from actual birthdates — not a rough offset
+  const yourAgeAtRetire   = ageAtYM(YOUR_BIRTH,   retireYearInt, retireMonth);
+  const spouseAgeAtRetire = ageAtYM(SPOUSE_BIRTH, retireYearInt, retireMonth);
+  const yourSS   = yourAgeAtRetire   >= trueYM(S.ssageYou)    ? S.ss67 * ssFactor(S.ssageYou)    : 0;
+  const spouseSS = spouseAgeAtRetire >= trueYM(S.ssageSpouse) ? S.wss  * ssFactor(S.ssageSpouse) : 0;
+  const total = draw + pension + yourSS + spouseSS;
+
+  const cells = [
+    ["Portfolio draw", draw],
+    ["Pension", pension],
+    ["Your SS", yourSS],
+    ["Spouse SS", spouseSS]
+  ];
+  $("inc-g").innerHTML =
+    cells.map(([k,v]) => `<div class="inc-c"><div class="inc-k">${k}</div><div class="inc-v">${money(v)}</div></div>`).join("") +
+    `<div class="inc-c" data-tot="1"><div class="inc-k">Total / month</div><div class="inc-v">${money(total)}</div></div>`;
+}
+
+const selectedAges = new Set();   // rows the user has clicked to highlight, kept across redraws
+
+function drawTable(snap, retireAge){
+  const milestones = []; for (let a=62; a<=70; a++) milestones.push(a);
+  const ages = [...new Set([retireAge, ...milestones])].filter(a => snap[a]).sort((x,y)=>x-y);
+  $("tbody").innerHTML = ages.map(age => {
+    const d = snap[age];
+    const hl = age === retireAge ? ' data-hl="1"' : '';
+    const sel = selectedAges.has(age) ? ' data-sel="1"' : '';
+    return `<tr${hl}${sel} data-age="${age}"><td>${age} · ${d.year}</td>` +
+      ACCOUNTS.map(m=>`<td class="num">${moneyK(d[m.k])}</td>`).join("") +
+      `<td class="num">${moneyK(d.total)}</td></tr>`;
+  }).join("");
+  $("tbody").querySelectorAll("tr").forEach(tr => {
+    tr.addEventListener("click", () => {
+      const age = Number(tr.dataset.age);
+      if (selectedAges.has(age)) { selectedAges.delete(age); tr.removeAttribute("data-sel"); }
+      else { selectedAges.add(age); tr.setAttribute("data-sel", "1"); }
+    });
+  });
+}
+
+/* ---------- controls ---------- */
+/* dec = decimals shown in the editable box; money = comma-grouped $ formatting */
+const FIELDS = {
+  retire:{dec:2},
+  rate:{dec:1}, wd:{dec:2}, hours:{dec:0},
+  bal:{dec:0, money:true}, elec:{dec:2, money:true}, step:{dec:2, money:true},
+  wm:{dec:0, money:true}, wstep:{dec:0, money:true}, rcap:{dec:0, money:true},
+  sinc:{dec:0, money:true}, tax:{dec:1}, drag:{dec:1},
+  pen:{dec:0, money:true}, surv:{dec:0}, ss67:{dec:0, money:true}, wss:{dec:0, money:true},
+  ssageYou:{dec:2}, ssageSpouse:{dec:2}
+};
+
+const rnd = (v,d) => { const p = Math.pow(10,d); return Math.round(v*p)/p; };
+const fmtBox = (v, dec, isMoney) => isMoney
+  ? v.toLocaleString("en-US", {minimumFractionDigits:dec, maximumFractionDigits:dec})
+  : v.toFixed(dec);
+
+function syncLabels(){
+  const active = document.activeElement;
+  for (const key in FIELDS){
+    const box = $("v-" + key);
+    if (box && box !== active) box.value = fmtBox(S[key], FIELDS[key].dec, FIELDS[key].money);
+  }
+  $("v-sepcap").textContent = money(S.sinc * S.seppct/100);
+}
+
+const YM_INDEX_KEYS = ["retire", "ssageYou", "ssageSpouse"];   // sliders that move over a constrained index
+
+function syncInputs(){
+  for (const key in FIELDS){
+    if (YM_INDEX_KEYS.includes(key)) continue;
+    const el = $(key);
+    if (el) el.value = S[key];
+  }
+  if (retireSlider) retireSlider.value = retireIndexOf(S.retire);
+  if ($("ssageYou")) $("ssageYou").value = ssAgeIndexOf(S.ssageYou);
+  if ($("ssageSpouse")) $("ssageSpouse").value = ssAgeIndexOf(S.ssageSpouse);
+  $("seppct").value = S.seppct;
+}
+
+function update(){ syncLabels(); render(); paceRender(); }
+
+Object.keys(FIELDS).concat(["seppct"]).forEach(key => {
+  if (YM_INDEX_KEYS.includes(key)) return;   // wired separately below — these sliders move over an index, not the raw value
+  const el = $(key);
+  if (!el) return;
+  el.addEventListener("input", e => { S[key] = parseFloat(e.target.value); update(); });
+});
+
+const retireSlider = $("retire");
+if (retireSlider) retireSlider.addEventListener("input", e => {
+  S.retire = retireValueOfIndex(parseFloat(e.target.value));
+  update();
+});
+["ssageYou", "ssageSpouse"].forEach(key => {
+  const s = $(key);
+  if (s) s.addEventListener("input", e => { S[key] = ssAgeValueOfIndex(parseFloat(e.target.value)); update(); });
+});
+
+/* typed boxes — clamp, mirror to the slider, and recompute. Money boxes accept commas.
+   Retirement Year and both SS claim ages are special: their sliders move over an
+   index, and typed values snap to the nearest valid month rather than clamping
+   against the slider's own (index) range. */
+for (const key in FIELDS){
+  const box = $("v-" + key), rng = $(key);
+  if (!box) continue;
+  const isRetire = key === "retire";
+  const isSSAge = key === "ssageYou" || key === "ssageSpouse";
+  const clamp = v => {
+    if (isRetire){
+      const { year, month } = decodeRetireYM(v);
+      return retireValue(year, month);
+    }
+    if (isSSAge){
+      const { year, month } = decodeSSAgeYM(v);
+      return ssAgeValue(year, month);
+    }
+    if (rng){ const mn = +rng.min, mx = +rng.max; v = Math.min(mx, Math.max(mn, v)); }
+    return rnd(v, FIELDS[key].dec);
+  };
+  const parseBox = () => parseFloat(box.value.replace(/,/g, ""));
+  const syncSlider = v => { if (rng) rng.value = isRetire ? retireIndexOf(v) : (isSSAge ? ssAgeIndexOf(v) : v); };
+  box.addEventListener("input", () => {
+    let v = parseBox();
+    if (isNaN(v)) return;                 // let them keep typing
+    v = clamp(v); S[key] = v;
+    syncSlider(v);
+    update();                             // syncLabels skips the box being typed in
+  });
+  box.addEventListener("change", () => {  // on blur / Enter, normalise the box
+    let v = parseBox();
+    if (isNaN(v)) v = DEFAULTS[key];
+    v = clamp(v); S[key] = v;
+    syncSlider(v);
+    update();
+  });
+}
+
+document.querySelectorAll("[data-t]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const g = btn.parentElement;
+    g.dataset.open = g.dataset.open === "1" ? "0" : "1";
+  });
+});
+
+/* ---------- scenarios (persistent) ---------- */
+const KEY = "scenarios:list";
+const say = t => { $("msg").textContent = t; };
+
+async function loadChips(){
+  let names = [];
+  try {
+    const res = await window.storage.get(KEY);
+    names = res ? JSON.parse(res.value) : [];
+  } catch { names = []; }
+  $("chips").innerHTML = names.map(n =>
+    `<span class="chip"><button data-load="${encodeURIComponent(n)}">${n}</button>` +
+    `<button data-del="${encodeURIComponent(n)}" aria-label="Delete ${n}">×</button></span>`
+  ).join("") || `<span class="msg">No saved scenarios yet.</span>`;
+
+  $("chips").querySelectorAll("[data-load]").forEach(b =>
+    b.addEventListener("click", () => loadScenario(decodeURIComponent(b.dataset.load))));
+  $("chips").querySelectorAll("[data-del]").forEach(b =>
+    b.addEventListener("click", () => delScenario(decodeURIComponent(b.dataset.del))));
+}
+
+async function saveScenario(){
+  const name = $("scn-name").value.trim();
+  if (!name) { say("Name the scenario before saving."); return; }
+  try {
+    await window.storage.set("scenario:" + name, JSON.stringify(S));
+    let names = [];
+    try { const r = await window.storage.get(KEY); names = r ? JSON.parse(r.value) : []; } catch {}
+    if (!names.includes(name)) names.push(name);
+    await window.storage.set(KEY, JSON.stringify(names));
+    $("scn-name").value = "";
+    say(`Saved "${name}".`);
+    loadChips();
+  } catch { say("Could not save — storage unavailable."); }
+}
+
+async function loadScenario(name){
+  try {
+    const r = await window.storage.get("scenario:" + name);
+    if (!r) { say("That scenario is missing."); return; }
+    S = Object.assign({}, DEFAULTS, JSON.parse(r.value));
+    syncInputs(); update();
+    say(`Loaded "${name}".`);
+  } catch { say("Could not load that scenario."); }
+}
+
+async function delScenario(name){
+  try {
+    await window.storage.delete("scenario:" + name);
+    let names = [];
+    try { const r = await window.storage.get(KEY); names = r ? JSON.parse(r.value) : []; } catch {}
+    await window.storage.set(KEY, JSON.stringify(names.filter(n => n !== name)));
+    say(`Deleted "${name}".`);
+    loadChips();
+  } catch { say("Could not delete that scenario."); }
+}
+
+$("scn-save").addEventListener("click", saveScenario);
+$("scn-reset").addEventListener("click", () => {
+  S = Object.assign({}, DEFAULTS);
+  syncInputs(); update(); say("Back to your confirmed figures.");
+});
+
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(render, 140); });
+
+/* ============ Per-field year log ============ */
+/* Every field except the one-time decisions (retirement year, SS claim ages)
+   gets a "Log By Year" drop-down where you can record what actually happened. */
+const LOGGABLE = Object.keys(FIELDS).filter(k => !["retire","ssageYou","ssageSpouse"].includes(k));
+const LOG_KEY = "fieldlog:v2";
+let LOG = {};
+
+/* read the $ / % / "/hr" etc. already baked into a field's markup so the
+   log rows format the same way as the slider readout, with no duplicate map */
+function fieldLogUnit(key){
+  const rng = $(key);
+  const f = rng && rng.closest(".f");
+  const v = f && f.querySelector(".f-v");
+  let prefix = "", suffix = "", seenInput = false;
+  if (v) v.childNodes.forEach(n => {
+    if (n.nodeType === 1 && n.tagName === "INPUT"){ seenInput = true; return; }
+    if (n.nodeType === 3){ if (!seenInput) prefix += n.textContent; else suffix += n.textContent; }
+  });
+  return { prefix, suffix, dec: FIELDS[key].dec };
+}
+
+function fieldLogDates(key){ return Object.keys(LOG[key] || {}).sort(); }   // ISO "YYYY-MM-DD" sorts chronologically
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const MS_PER_YEAR = 365.25 * 24 * 3600 * 1000;
+
+function fieldLogRenderPanel(key){
+  const panel = $("logpanel-" + key);
+  if (!panel) return;
+  const dates = fieldLogDates(key);
+  const { prefix, suffix, dec } = fieldLogUnit(key);
+  const isMoney = !!FIELDS[key].money;
+  const rows = dates.length
+    ? dates.map(d => `<div class="f-logrow">` +
+        `<span class="f-logdate">${d}</span>` +
+        (prefix ? `<span class="f-logunit">${prefix}</span>` : "") +
+        `<input class="f-logval" type="${isMoney ? "text" : "number"}" ${isMoney ? 'inputmode="decimal"' : 'step="any"'} data-date="${d}" value="${fmtBox(LOG[key][d], dec, isMoney)}">` +
+        (suffix ? `<span class="f-logunit">${suffix}</span>` : "") +
+        `<button class="f-logdel" type="button" data-date="${d}" aria-label="Delete ${d}">×</button></div>`).join("")
+    : `<div class="f-logempty">No entries logged yet.</div>`;
+  panel.innerHTML = rows +
+    `<div class="f-logadd">` +
+      `<input type="date" class="f-logadddate" value="${todayISO()}">` +
+      `<button type="button" class="f-logaddbtn">+ Add Entry</button>` +
+    `</div>`;
+  panel.querySelectorAll(".f-logval").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const v = parseFloat(inp.value.replace(/,/g, ""));
+      if (!isNaN(v)){ LOG[key][inp.dataset.date] = rnd(v, dec); fieldLogPersist(); }
+      if (key === "bal") syncBalFromLatestLog(); else paceRender();
+    });
+  });
+  panel.querySelectorAll(".f-logdel").forEach(btn => {
+    btn.addEventListener("click", () => {
+      delete LOG[key][btn.dataset.date];
+      fieldLogPersist();
+      fieldLogRenderPanel(key);
+      if (key === "bal") syncBalFromLatestLog(); else paceRender();
+    });
+  });
+  panel.querySelector(".f-logaddbtn").addEventListener("click", () => {
+    const d = panel.querySelector(".f-logadddate").value;
+    if (!d) return;
+    if (LOG[key][d] == null) LOG[key][d] = rnd(S[key] ?? 0, dec);
+    fieldLogPersist();
+    fieldLogRenderPanel(key);
+    if (key === "bal") syncBalFromLatestLog(); else paceRender();
+  });
+}
+
+/* Current Balance is special: logging it is meant to double as "update my real
+   balance," so the live field always mirrors whichever logged date is latest. */
+function syncBalFromLatestLog(){
+  const dates = fieldLogDates("bal");
+  if (!dates.length) { paceRender(); return; }
+  const latest = dates[dates.length - 1];
+  const v = LOG.bal[latest];
+  if (typeof v !== "number" || isNaN(v)) { paceRender(); return; }
+  S.bal = v;
+  const rng = $("bal");
+  if (rng) rng.value = v;
+  update();   // update() already calls paceRender() too
+}
+
+/* semicircle speedometer: background track + 3 coloured zones + a needle */
+function drawGauge(status, delta){
+  const svg = $("pacegauge");
+  if (!svg) return;
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (n,at) => { const e = document.createElementNS(NS,n); for (const k in at) e.setAttribute(k, at[k]); return e; };
+  svg.innerHTML = "";
+  const cs = getComputedStyle(document.documentElement);
+  const grn  = cs.getPropertyValue("--verify").trim()     || "#34D399";
+  const amb  = cs.getPropertyValue("--accent").trim()     || "#67E8F9";
+  const ink2 = cs.getPropertyValue("--graphite-2").trim() || "#7A8C99";
+  const rule = cs.getPropertyValue("--rule").trim()       || "#22303C";
+  const bad  = cs.getPropertyValue("--revision").trim()   || "#E06C75";
+
+  const cx = 80, cy = 78, r = 56;
+  const pt = (deg, rr) => { const rad = deg*Math.PI/180; return { x: cx + (rr||r)*Math.cos(rad), y: cy - (rr||r)*Math.sin(rad) }; };
+  const arc = (a0, a1) => {
+    const p0 = pt(a0), p1 = pt(a1);
+    return `M ${p0.x.toFixed(1)} ${p0.y.toFixed(1)} A ${r} ${r} 0 0 1 ${p1.x.toFixed(1)} ${p1.y.toFixed(1)}`;
+  };
+
+  const defs = el("defs", {});
+  const f = el("filter", {id:"gaugeGlow", x:"-50%", y:"-50%", width:"200%", height:"200%"});
+  f.appendChild(el("feGaussianBlur", {stdDeviation:"3.5"}));
+  defs.appendChild(f);
+  svg.appendChild(defs);
+
+  // how far round the dial the needle sits: centred = on pace, right = ahead
+  const CLAMP = 6;
+  const hasData = status === "data";
+  const p = hasData ? (Math.max(-CLAMP, Math.min(CLAMP, delta)) + CLAMP) / (2*CLAMP) : 0.5;
+  const angle = 180 - p*180;
+  const live = !hasData ? ink2 : (delta >= 0.3 ? grn : (delta <= -0.3 ? bad : amb));
+
+  // dark track, then a single luminous progress arc — matching the reference dial
+  svg.appendChild(el("path", { d:arc(180,0), fill:"none", stroke:rule, "stroke-width":8, "stroke-linecap":"round" }));
+  if (p > 0.005){
+    const prog = arc(180, angle);
+    svg.appendChild(el("path", { d:prog, fill:"none", stroke:live, "stroke-width":8,
+      "stroke-linecap":"round", "stroke-opacity":hasData?0.55:0.25, filter:"url(#gaugeGlow)" }));
+    svg.appendChild(el("path", { d:prog, fill:"none", stroke:live, "stroke-width":8,
+      "stroke-linecap":"round", "stroke-opacity":hasData?1:0.35 }));
+  }
+
+  // fine graduation ticks around the outside
+  for (let i=0; i<=12; i++){
+    const a = 180 - i*15;
+    const o = pt(a, r+7), n = pt(a, r+(i%3===0?12:10));
+    svg.appendChild(el("line", {x1:o.x.toFixed(1), y1:o.y.toFixed(1), x2:n.x.toFixed(1), y2:n.y.toFixed(1),
+      stroke:ink2, "stroke-width":i%3===0?1.2:0.8, "stroke-opacity":i%3===0?0.55:0.3}));
+  }
+
+  // slim needle from the hub to just past the arc
+  const tip = pt(angle, r+2), tail = pt(angle+180, 8);
+  svg.appendChild(el("line", { x1:tail.x.toFixed(1), y1:tail.y.toFixed(1), x2:tip.x.toFixed(1), y2:tip.y.toFixed(1),
+    stroke:hasData?"#F2F7EC":ink2, "stroke-width":1.6, "stroke-linecap":"round", "stroke-opacity":hasData?0.95:0.5 }));
+  svg.appendChild(el("circle", { cx, cy, r:3.4, fill:hasData?"#F2F7EC":ink2, "fill-opacity":hasData?0.95:0.5 }));
+}
+
+/* ---------- live pace check: Current Balance vs the Annual Return goal ---------- */
+function paceRender(){
+  const v = $("pace-v"), note = $("pace-note"), k = $("pace-k");
+  if (!v || !LOG) return;
+  const goal = S.rate;
+  k.textContent = `Pace Check — Current Balance Vs ${goal.toFixed(1)}% Goal`;
+  const dates = fieldLogDates("bal");
+
+  if (dates.length < 2){
+    v.textContent = "NO DATA"; v.className = "pace-v flat";
+    drawGauge("none", 0);
+    note.textContent = dates.length === 1
+      ? `Logged ${dates[0]} only — add one more entry of Current Balance to see your pace.`
+      : "Log at least two entries of Current Balance (any dates) to see your pace.";
+    return;
+  }
+
+  const d1 = dates[dates.length - 2], d2 = dates[dates.length - 1];
+  const b1 = LOG.bal[d1], b2 = LOG.bal[d2];
+  const yrs = (new Date(d2) - new Date(d1)) / MS_PER_YEAR;
+  if (!(b1 > 0) || yrs <= 0){
+    v.textContent = "NO DATA"; v.className = "pace-v flat";
+    drawGauge("none", 0);
+    note.textContent = "Need a positive starting balance and two different dates to compute growth.";
+    return;
+  }
+
+  const realized = (Math.pow(b2 / b1, 1/yrs) - 1) * 100;
+  const delta = realized - goal;
+  const status = delta >= 0.3 ? "AHEAD" : (delta <= -0.3 ? "BEHIND" : "ON PACE");
+  v.textContent = status;
+  v.className = "pace-v " + (delta >= 0.3 ? "good" : (delta <= -0.3 ? "bad" : "flat"));
+  drawGauge("data", delta);
+  const span = yrs < 1 ? `${Math.round(yrs*365)} days` : `${yrs.toFixed(2)} yrs`;
+  note.textContent =
+    `${(delta>=0?"+":"−")}${Math.abs(delta).toFixed(1)} pts vs goal · ${d1} → ${d2} (${span}): ${money(b1)} to ${money(b2)}, realized ${realized.toFixed(1)}%/yr vs ${goal.toFixed(1)}% goal.` +
+    (yrs < 30/365.25 ? " Short window — annualized figure will be noisy." : "");
+}
+
+function fieldLogBuild(){
+  LOGGABLE.forEach(key => {
+    const rng = $(key);
+    if (!rng) return;
+    const container = rng.closest(".f");
+    if (!container || container.querySelector(".f-logtoggle")) return;
+    if (!LOG[key]) LOG[key] = {};
+    const wrap = document.createElement("div");
+    wrap.className = "f-logwrap";
+    wrap.innerHTML =
+      `<button type="button" class="f-logtoggle" data-key="${key}" aria-expanded="false">Log By Date <span class="chev">▾</span></button>` +
+      `<div class="f-logpanel" id="logpanel-${key}" hidden></div>`;
+    container.insertBefore(wrap, rng);   // sits under the label, above the slider — same for every field
+  });
+  document.querySelectorAll(".f-logtoggle").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.key;
+      const panel = $("logpanel-" + key);
+      const opening = panel.hidden;
+      panel.hidden = !opening;
+      btn.setAttribute("aria-expanded", String(opening));
+      if (opening) fieldLogRenderPanel(key);
+    });
+  });
+}
+
+async function fieldLogLoad(){
+  try { const r = await window.storage.get(LOG_KEY); if (r) LOG = JSON.parse(r.value) || {}; } catch {}
+  LOGGABLE.forEach(k => { if (!LOG[k]) LOG[k] = {}; });
+}
+async function fieldLogPersist(){ try { await window.storage.set(LOG_KEY, JSON.stringify(LOG)); } catch {} }
+
+async function fieldLogInit(){
+  await fieldLogLoad();
+  fieldLogBuild();
+  paceRender();
+}
+
+syncInputs();
+update();
+loadChips();
+fieldLogInit();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
