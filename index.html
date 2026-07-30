@@ -210,6 +210,8 @@ thead th{
   color:var(--graphite-2);border-bottom:1.5px solid var(--graphite);
 }
 tbody td:last-child{color:var(--accent)}
+tbody tr[data-hl="1"]{background:rgba(196,229,56,.07)}
+tbody tr[data-hl="1"] td{font-weight:600;color:var(--accent)}
 td.num{font-variant-numeric:tabular-nums}
 tfoot td{border-bottom:0;border-top:1.5px solid var(--graphite);font-weight:600}
 
@@ -452,7 +454,7 @@ button,input{font:inherit}
   background:
     linear-gradient(180deg,rgba(2,8,14,.02) 0%,rgba(2,8,14,.20) 42%,rgba(2,8,14,.98) 100%),
     linear-gradient(90deg,rgba(2,8,14,.92) 0%,rgba(2,8,14,.64) 38%,rgba(2,8,14,.04) 75%),
-    url("hero-space.webp") center/cover no-repeat;
+    url("hero-space.png") center/cover no-repeat;
   box-shadow:inset 0 -1px 0 rgba(92,134,158,.18);
 }
 .titleblock::after{
@@ -1335,11 +1337,12 @@ function drawIncome(a, retireAge, retireMonth, retireYearInt){
 }
 
 function drawTable(snap, retireAge){
-  const milestones = []; for (let a=62; a<=70; a++) milestones.push(a);
+  const milestones = []; for (let a=61; a<=70; a++) milestones.push(a);
   const ages = [...new Set([retireAge, ...milestones])].filter(a => snap[a]).sort((x,y)=>x-y);
   $("tbody").innerHTML = ages.map(age => {
     const d = snap[age];
-    return `<tr data-age="${age}"><td>${age} · ${d.year}</td>` +
+    const hl = age === retireAge ? ' data-hl="1"' : '';
+    return `<tr${hl} data-age="${age}"><td>${age} · ${d.year}</td>` +
       ACCOUNTS.map(m=>`<td class="num">${moneyK(d[m.k])}</td>`).join("") +
       `<td class="num">${moneyK(d.total)}</td></tr>`;
   }).join("");
