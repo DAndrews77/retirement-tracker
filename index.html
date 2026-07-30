@@ -81,7 +81,7 @@ body{
   .sheet{min-height:calc(100vh - 52px)}
 }
 
-.grp{background:var(--panel);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.grp{background:var(--panel);border:1px solid var(--rule);border-radius:10px;overflow:hidden;flex-shrink:0}
 .grp-h{
   width:100%;text-align:left;cursor:pointer;background:none;border:0;
   padding:10px 16px;display:flex;align-items:center;gap:9px;
@@ -446,7 +446,6 @@ button,input{font:inherit}
 .appbar-copy{min-width:0;display:flex;flex-direction:column;flex:1;line-height:1.15}
 .appbar-copy strong{font-size:18px;letter-spacing:-.015em}
 .appbar-copy span{margin-top:3px;color:var(--graphite-2);font-size:12px}
-.appbar-actions{display:flex;gap:8px}.appbar-cloud{color:var(--accent)}
 .titleblock{
   position:relative;display:block;overflow:hidden;
   min-height:292px;margin:0;border:0;border-radius:0 0 28px 28px;
@@ -565,11 +564,6 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
 </button>
 <div class="appbar-copy"><strong>Retirement Tracker</strong><span>Plan today. Live tomorrow.</span></div>
-<div class="appbar-actions">
-<button aria-label="Saved locally" class="appbar-btn appbar-cloud" type="button">
-<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.2 8.3 4.5 4.5 0 0 0 7 18Z"></path><path d="m9 13 3-3 3 3M12 10v7"></path></svg>
-</button>
-</div>
 </header><div class="titleblock">
 <div class="tb-main">
 
