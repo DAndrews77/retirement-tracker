@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v11-recache";
+const CACHE = "retirement-tracker-v12-graph-edge-only";
 const ASSETS = [
   "./",
   "./index.html",
