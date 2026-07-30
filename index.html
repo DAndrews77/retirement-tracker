@@ -222,6 +222,13 @@ tfoot td{border-bottom:0;border-top:1.5px solid var(--graphite);font-weight:600}
 
 /* income panel */
 .inc{padding:15px 20px 18px;background:var(--panel);border:1px solid var(--rule);border-radius:10px}
+
+/* activity log panel */
+.activity-card{padding:15px 20px 18px;background:var(--panel);border:1px solid var(--rule);border-radius:10px}
+.activity-row{display:flex;align-items:center;gap:9px;padding:6px 0}
+.activity-row + .activity-row{border-top:1px solid var(--rule)}
+.activity-label{flex:1;font-size:11.5px;color:var(--graphite)}
+.activity-val{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--accent)}
 .inc-h{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--graphite-2);margin-bottom:11px}
 .inc-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:9px;background:transparent;border:0}
 .inc-c{background:var(--panel-2);border:1px solid var(--rule);border-radius:8px;padding:11px 13px}
@@ -488,8 +495,8 @@ button,input{font:inherit}
 .hero-years svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .body{display:block;padding:14px 14px calc(var(--nav-h) + 22px);background:transparent}
 .results{display:flex;flex-direction:column;gap:12px;padding:0;background:transparent}
-.results > .dimwrap{order:1}.results > .leg{order:2}.results > .pace{order:3}.results > .inc{order:4}.results > .tbl-wrap{order:6}
-.dimwrap,.leg,.pace,.inc,.tbl-wrap{
+.results > .dimwrap{order:1}.results > .leg{order:2}.results > .pace{order:3}.results > .inc{order:4}.results > .tbl-wrap{order:6}.results > .activity-card{order:7}
+.dimwrap,.leg,.pace,.inc,.tbl-wrap,.activity-card{
   border-color:rgba(83,124,149,.28)!important;
   background:linear-gradient(180deg,rgba(8,20,30,.97),rgba(4,13,21,.99))!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.018),0 14px 38px rgba(0,0,0,.18);
@@ -504,7 +511,7 @@ button,input{font:inherit}
 .pace-gauge-wrap{width:112px}.pace-v{font-size:13px;bottom:1px}.pace-body{min-width:0}
 .pace-k{font-family:"IBM Plex Sans",sans-serif;font-size:15px;letter-spacing:-.01em;text-transform:none;color:#F4F8FA;font-weight:600}
 .pace-note{font-size:10px;line-height:1.55;color:var(--graphite-2)}
-.inc{padding:16px;border-radius:20px}.inc-h{margin-bottom:12px;font-family:"IBM Plex Sans",sans-serif;font-size:15px;letter-spacing:-.01em;text-transform:none;color:#F4F8FA;font-weight:600}
+.inc,.activity-card{padding:16px;border-radius:20px}.inc-h{margin-bottom:12px;font-family:"IBM Plex Sans",sans-serif;font-size:15px;letter-spacing:-.01em;text-transform:none;color:#F4F8FA;font-weight:600}
 .inc-g{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.inc-c{min-width:0;border-radius:14px;padding:12px;background:linear-gradient(180deg,rgba(10,27,40,.86),rgba(5,17,27,.94));border-color:rgba(78,120,145,.24)}
 .inc-c[data-tot="1"]{grid-column:1/-1;border-color:rgba(57,216,123,.42);background:linear-gradient(135deg,rgba(18,74,45,.34),rgba(5,20,25,.96))}
 .inc-k{font-size:8px}.inc-v{font-size:25px}.inc-f{font-size:9px}
@@ -741,7 +748,7 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <div class="inc-h">Monthly income at retirement</div>
 <div class="inc-g" id="inc-g"></div>
 </div>
-<div class="tbl-wrap" id="activity">
+<div class="tbl-wrap" id="milestones">
 <table>
 <caption>Balances by milestone age</caption>
 <thead>
@@ -757,6 +764,10 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 </thead>
 <tbody id="tbody"></tbody>
 </table>
+</div>
+<div class="activity-card" id="activity">
+<div class="inc-h">Activity Log</div>
+<div id="activity-list"></div>
 </div>
 </div>
 </div>
@@ -1560,7 +1571,7 @@ function fieldLogRenderPanel(key){
   panel.querySelectorAll(".f-logval").forEach(inp => {
     inp.addEventListener("input", () => {
       const v = parseFloat(inp.value.replace(/,/g, ""));
-      if (!isNaN(v)){ LOG[key][inp.dataset.date] = rnd(v, dec); fieldLogPersist(); }
+      if (!isNaN(v)){ LOG[key][inp.dataset.date] = rnd(v, dec); fieldLogPersist(); renderActivityLog(); }
       if (key === "bal") syncBalFromLatestLog(); else paceRender();
     });
   });
@@ -1569,6 +1580,7 @@ function fieldLogRenderPanel(key){
       delete LOG[key][btn.dataset.date];
       fieldLogPersist();
       fieldLogRenderPanel(key);
+      renderActivityLog();
       if (key === "bal") syncBalFromLatestLog(); else paceRender();
     });
   });
@@ -1578,8 +1590,40 @@ function fieldLogRenderPanel(key){
     if (LOG[key][d] == null) LOG[key][d] = rnd(S[key] ?? 0, dec);
     fieldLogPersist();
     fieldLogRenderPanel(key);
+    renderActivityLog();
     if (key === "bal") syncBalFromLatestLog(); else paceRender();
   });
+}
+
+/* Activity tab: a single chronological feed of every logged entry across
+   every field, newest first - so the clock icon in the bottom nav actually
+   points at a real history view instead of duplicating the Dashboard. */
+function fieldLabel(key){
+  const rng = $(key);
+  const f = rng && rng.closest(".f");
+  const l = f && f.querySelector(".f-l");
+  return l ? l.textContent : key;
+}
+
+function renderActivityLog(){
+  const list = document.getElementById("activity-list");
+  if (!list) return;
+  const entries = [];
+  LOGGABLE.forEach(key => {
+    const { prefix, suffix, dec } = fieldLogUnit(key);
+    const isMoney = !!FIELDS[key].money;
+    fieldLogDates(key).forEach(d => {
+      entries.push({ date: d, label: fieldLabel(key), value: LOG[key][d], prefix, suffix, dec, isMoney });
+    });
+  });
+  entries.sort((a, b) => b.date.localeCompare(a.date));
+  list.innerHTML = entries.length
+    ? entries.map(e => `<div class="activity-row">` +
+        `<span class="f-logdate">${e.date}</span>` +
+        `<span class="activity-label">${e.label}</span>` +
+        `<span class="activity-val">${e.prefix}${fmtBox(e.value, e.dec, e.isMoney)}${e.suffix}</span>` +
+      `</div>`).join("")
+    : `<div class="f-logempty">No activity logged yet — use "Log By Date" under any field to start tracking.</div>`;
 }
 
 /* Current Balance is special: logging it is meant to double as "update my real
@@ -1730,6 +1774,7 @@ async function fieldLogInit(){
   await fieldLogLoad();
   fieldLogBuild();
   paceRender();
+  renderActivityLog();
 }
 
 syncInputs();
