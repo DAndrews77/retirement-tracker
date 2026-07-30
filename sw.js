@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v5-accordion-fix";
+const CACHE = "retirement-tracker-v6-activity-log";
 const ASSETS = [
   "./",
   "./index.html",
