@@ -1,14 +1,25 @@
-# Notes for whoever (or whatever AI) is redesigning this
+# Notes for whoever (or whatever AI) is working on this next
 
 This is a single self-contained `index.html` (no build step, no external JS
 dependencies beyond two Google Fonts loaded via `<link>` tags). It's a personal
 retirement-projection calculator with live sliders, a data table, and a
 hand-drawn SVG chart, wrapped as an installable PWA (`manifest.json` + `sw.js`).
 
-The owner wants a **visual redesign** ("a better skin"), not new features or
-changed math. Please read this before editing, and open your changes as a
-branch or pull request rather than pushing straight to `main` — a human
-reviews every change before it goes live.
+It has already been through one full visual redesign (a "cinematic" mobile
+theme: hero space photo, bottom tab nav, drawer-style inputs) plus several
+rounds of polish fixes on top of that. This package is the current, live
+state — treat it as the baseline, not a draft. The owner wants continued
+**visual/UX iteration**, not new features or changed math, unless asked.
+
+## Workflow reality check (read this first)
+
+The instinct is to say "open a PR" here, but in practice, the AI tool being
+handed this file usually has **no way to push changes back to a repo or
+git** — it can only hand back edited files for the owner to manually apply.
+So: **don't assume you can open a branch or PR.** Just make your edits and
+provide the modified file(s) as a download (or clearly marked-up diffs) for
+the owner to hand back to whoever is actually applying them to the live
+site. Say plainly which file(s) you changed.
 
 ## What's safe to change (pure styling)
 
@@ -28,9 +39,21 @@ reviews every change before it goes live.
   the chart's ridge lines and the legend swatches. Update these together with
   the CSS palette if you want the chart's account colors to match a new theme.
 - The 4 icon PNGs (`icon-192.png`, `icon-512.png`, `icon-512-maskable.png`,
-  `apple-touch-icon.png`) and `manifest.json`'s colors/name — free to redesign,
-  just keep the same filenames and sizes referenced in `manifest.json` and
-  `index.html`'s `<head>`, or update both together.
+  `apple-touch-icon.png`), `hero-space.png` (the header background photo),
+  and `manifest.json`'s colors/name — free to redesign, just keep the same
+  filenames referenced in `manifest.json`/`index.html`'s `<head>` and in
+  `sw.js`'s `ASSETS` array, or update all three together if you rename
+  anything.
+
+**A real gotcha we hit**: an earlier AI-generated version of `hero-space.png`
+(back when it was a `.webp`) had fake UI icons — a cloud-upload button and a
+gear icon — baked directly into the photo's pixels, in the corner where the
+app's own stats panel overlaps it. It looked exactly like a real button, and
+no amount of HTML/CSS changes could remove it, since it wasn't a DOM element
+at all. If you generate or edit any image asset, don't render fake UI chrome
+into it — and if something that looks like a button won't go away no matter
+what gets deleted from the code, check whether it's actually baked into an
+image file before assuming it's a DOM bug.
 
 ## Do not change (functionality — breaking these breaks the tool)
 
@@ -44,6 +67,15 @@ reviews every change before it goes live.
   `#isosvg` in extra elements that would change its measured `clientWidth`.
 - Anything inside the single `<script>` block, unless you're intentionally
   changing chart rendering style (see below), not just color.
+- The milestone table (`drawTable`) intentionally highlights *only* the row
+  matching the current retirement year (`data-hl`) — there used to also be a
+  click-to-select feature on other rows, and it was deliberately removed.
+  Don't bring back click-to-highlight on arbitrary rows unless asked.
+- The "Activity" bottom-nav tab intentionally shows a real chronological log
+  of everything entered via "Log By Date" (`renderActivityLog`), not a
+  duplicate of the Dashboard — it used to just scroll to the same balances
+  table Dashboard already showed, which read as pointless, so it was given
+  its own distinct content.
 - Slider `min`/`max`/`step`/`value` attributes on inputs whose ids start with
   `retire` or `ssage` (Retirement Year, Your/Spouse Claim Age) — these sliders
   move over a constrained index (see `RETIRE_MONTHS` / `decodeRetireYM` /
@@ -77,7 +109,24 @@ so heights stay proportionally honest. Please preserve:
 - the hover/touch "trace" feature (search for `showHover`) that shows exact
   values under the cursor — this is a functional feature, not decoration;
 - real data only — no injected random noise/jitter for visual flair, the
-  terrain's shape must stay an honest reflection of the underlying numbers.
+  terrain's shape must stay an honest reflection of the underlying numbers;
+- crest lines draw in their own pass *after* every ridge's occlusion body
+  (see `crestLines` array in `drawTerrain`) — this was a deliberate fix so a
+  ridge crossing above a nearer one (Your Roth over SEP IRA, near the right
+  edge) stays visible instead of getting painted over. Don't move the crest
+  drawing back inside the per-ridge loop;
+- the "Your Roth" peak label is intentionally offset *below* its line
+  instead of above like the others (search `m.k === "droth"` in the
+  `peakLabels.push` line) — its crest ends up lower on screen than SEP
+  IRA's at the far right, so the normal above-the-line offset made its
+  label collide with SEP IRA's instead of reading against its own line.
+
+Also: the chart's own `#iso3d` container and its card (`.dimwrap`/`.leg`)
+were deliberately tried at full window width (edge-to-edge, breaking out of
+the card padding) and explicitly reverted — the owner wants the chart card
+the same width as every other card on the page, not wider. Don't reintroduce
+negative margins/`calc()` width tricks on `.iso3d` or `.dimwrap` without
+being asked.
 
 ## Offline requirement
 
@@ -90,8 +139,10 @@ you add new files (fonts, images, scripts), add them to the `ASSETS` array in
 `sw.js` too, and bump the `CACHE` version string so installed phones actually
 pick up the change.
 
-## Workflow
+## Where this lives
 
-Please make changes on a new branch and open a pull request rather than
-pushing to `main` directly, so they can be reviewed before going live on
-[dandrews77.github.io/retirement-tracker](https://dandrews77.github.io/retirement-tracker/).
+The live site is [dandrews77.github.io/retirement-tracker](https://dandrews77.github.io/retirement-tracker/),
+built from the public repo `DAndrews77/retirement-tracker` on GitHub. As
+covered above, please hand back edited file(s) rather than assuming you can
+push or open a PR directly — someone else applies changes to the repo and
+redeploys.
