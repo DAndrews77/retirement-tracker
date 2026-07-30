@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v7-markup-fixes";
+const CACHE = "retirement-tracker-v8-force-sw-update";
 const ASSETS = [
   "./",
   "./index.html",
