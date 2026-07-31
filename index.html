@@ -599,7 +599,7 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
   .dimwrap,.pace,.inc,.tbl-wrap,.activity-card{border-radius:16px}
   .dimwrap{padding:14px 0 8px;border-radius:16px 16px 0 0}
   .dimcap{padding:0 14px}
-  .iso3d{height:270px;border-radius:0}
+  .iso3d{height:270px;border-radius:0;box-shadow:none}
   .leg{padding:12px 10px 14px;border-radius:0 0 16px 16px;overflow-x:auto;justify-content:flex-start}
   .leg-i{flex:0 0 auto;font-size:8px}
   .pace{grid-template-columns:92px 1fr;padding:14px;gap:12px}
@@ -1184,7 +1184,7 @@ function drawTerrain(snap, retireAge, atRetire){
 
   /* ---- ground-plane geometry ---- */
   const compact = window.matchMedia("(max-width:600px)").matches;
-  const padL = compact ? 8 : 26, padR = compact ? 8 : 24, padTop = 34, padBottom = 40;
+  const padL = compact ? 0 : 26, padR = compact ? 0 : 24, padTop = 34, padBottom = 40;
   const plotW = W - padL - padR, plotH = H - padTop - padBottom;
   const nL = ACCOUNTS.length;
   const skew   = plotW * 0.13;                    // horizontal recession of far ridges
@@ -1311,7 +1311,7 @@ function drawTerrain(snap, retireAge, atRetire){
     const t = i/last, x = rowX0(nL-1) + t*(xR - rowX0(nL-1));
     svg.appendChild(el("line", {x1:x.toFixed(1), y1:axBase.toFixed(1), x2:x.toFixed(1), y2:(axBase+5).toFixed(1),
       stroke:ink2, "stroke-width":1, "stroke-opacity":0.7}));
-    const lb = el("text", {x:x.toFixed(1), y:(axBase+16).toFixed(1), "text-anchor":"middle",
+    const lb = el("text", {x:x.toFixed(1), y:(axBase+16).toFixed(1), "text-anchor":compact && i === 0 ? "start" : "middle",
       "font-family":"IBM Plex Mono, monospace","font-size":"8.5", fill:ink2});
     lb.textContent = String(yearOf(ages[i]));
     svg.appendChild(lb);
