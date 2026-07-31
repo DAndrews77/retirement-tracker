@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v13-label-fix";
+const CACHE = "retirement-tracker-v14-iphone-cleanup";
 const ASSETS = [
   "./",
   "./index.html",
@@ -41,3 +41,4 @@ self.addEventListener("fetch", e => {
     })
   );
 });
+
