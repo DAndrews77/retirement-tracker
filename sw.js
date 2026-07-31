@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v16-shared-graph-edge";
+const CACHE = "retirement-tracker-v17-full-width-cards";
 const ASSETS = [
   "./",
   "./index.html",
