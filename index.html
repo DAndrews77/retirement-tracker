@@ -597,8 +597,9 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
   .body{padding:10px 10px calc(var(--nav-h) + 24px)}
   .results{gap:10px}
   .dimwrap,.pace,.inc,.tbl-wrap,.activity-card{border-radius:16px}
-  .dimwrap{padding:14px 10px 8px;border-radius:16px 16px 0 0}
-  .iso3d{height:270px;border-radius:13px}
+  .dimwrap{padding:14px 0 8px;border-radius:16px 16px 0 0}
+  .dimcap{padding:0 14px}
+  .iso3d{height:270px;border-radius:0}
   .leg{padding:12px 10px 14px;border-radius:0 0 16px 16px;overflow-x:auto;justify-content:flex-start}
   .leg-i{flex:0 0 auto;font-size:8px}
   .pace{grid-template-columns:92px 1fr;padding:14px;gap:12px}
@@ -624,6 +625,10 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
   .drawer-head button{width:44px;height:44px}
   .grp-h{min-height:52px}
   .f{margin-bottom:20px}
+  .f-top{width:100%;align-items:flex-start}
+  .f-l{flex:1;min-width:0;padding-right:12px;line-height:1.35}
+  .f-v{flex:0 0 auto;margin-left:auto;justify-content:flex-end;text-align:right;white-space:nowrap}
+  .f-in{width:8.5ch;max-width:100%;text-align:right}
   input[type=range]{height:34px}
   .f-in,.scn-row input[type=text],.f-logval,.f-logadddate{font-size:16px}
   .btn,.f-logaddbtn{min-height:44px}
@@ -1178,7 +1183,8 @@ function drawTerrain(snap, retireAge, atRetire){
   svg.appendChild(title);
 
   /* ---- ground-plane geometry ---- */
-  const padL = 26, padR = 24, padTop = 34, padBottom = 40;
+  const compact = window.matchMedia("(max-width:600px)").matches;
+  const padL = compact ? 8 : 26, padR = compact ? 8 : 24, padTop = 34, padBottom = 40;
   const plotW = W - padL - padR, plotH = H - padTop - padBottom;
   const nL = ACCOUNTS.length;
   const skew   = plotW * 0.13;                    // horizontal recession of far ridges
@@ -1909,4 +1915,3 @@ if ("serviceWorker" in navigator) {
 </script>
 </body>
 </html>
-
