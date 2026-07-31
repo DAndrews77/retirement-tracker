@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v14-iphone-cleanup";
+const CACHE = "retirement-tracker-v15-markup-fixes";
 const ASSETS = [
   "./",
   "./index.html",
@@ -41,4 +41,3 @@ self.addEventListener("fetch", e => {
     })
   );
 });
-
