@@ -557,6 +557,94 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 @media (max-width:390px){
   .titleblock{min-height:282px}.tb-meta{right:12px;top:13px}.tb-cell{min-width:52px;padding:7px 6px}.headline{left:16px;right:16px;bottom:19px}.hl-v{font-size:50px}.hl-note{max-width:100%;font-size:9px}.body{padding-left:6px;padding-right:6px}.iso3d{height:305px}.pace{grid-template-columns:96px 1fr}.pace-gauge-wrap{width:96px}.nav-item span{font-size:7px}.appbar{padding-left:12px;padding-right:12px}.appbar-copy strong{font-size:16px}
 }
+
+/* ===== iPhone clarity pass — compact, touch-friendly, content-first ===== */
+@media (max-width:600px){
+  :root{--nav-h:68px}
+  html{background:var(--page);scroll-padding-top:72px}
+  body{
+    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);
+    background:var(--page);
+    -webkit-tap-highlight-color:transparent;
+  }
+  body::before,body::after{display:none}
+  .sheet{
+    min-height:100dvh;
+    border-radius:0;
+    box-shadow:none;
+    overflow:visible;
+  }
+  .appbar{
+    position:sticky;top:0;z-index:50;
+    min-height:58px;padding:8px 14px;
+    padding-top:max(8px,env(safe-area-inset-top,0));
+    background:rgba(2,8,14,.88);
+    -webkit-backdrop-filter:blur(20px) saturate(135%);
+    backdrop-filter:blur(20px) saturate(135%);
+  }
+  .appbar-btn{width:44px;height:44px}
+  .appbar-copy strong{font-size:17px}
+  .appbar-copy span{font-size:11px}
+  .titleblock{min-height:244px;border-radius:0 0 22px 22px}
+  .tb-main{padding:16px 16px 0}
+  .tb-meta{top:14px;right:14px;border-radius:12px}
+  .tb-cell{min-width:48px;padding:7px 6px}
+  .tb-k{font-size:6.5px}.tb-v{font-size:11px}
+  .headline{left:16px;right:16px;bottom:17px}
+  .hl-v{font-size:clamp(48px,16vw,64px);margin-top:4px}
+  .hl-note{margin-top:6px;font-size:9px;white-space:normal;line-height:1.45}
+  .hero-years{margin-top:9px;padding:6px 9px}
+  .body{padding:10px 10px calc(var(--nav-h) + 24px)}
+  .results{gap:10px}
+  .dimwrap,.pace,.inc,.tbl-wrap,.activity-card{border-radius:16px}
+  .dimwrap{padding:14px 10px 8px;border-radius:16px 16px 0 0}
+  .iso3d{height:270px;border-radius:13px}
+  .leg{padding:12px 10px 14px;border-radius:0 0 16px 16px;overflow-x:auto;justify-content:flex-start}
+  .leg-i{flex:0 0 auto;font-size:8px}
+  .pace{grid-template-columns:92px 1fr;padding:14px;gap:12px}
+  .pace-gauge-wrap{width:92px}
+  .pace-k,.inc-h,.tbl-wrap caption{font-size:14px}
+  .pace-note{font-size:9.5px}
+  .inc,.activity-card{padding:14px}
+  .inc-c{padding:11px;border-radius:12px}
+  .inc-v{font-size:23px;overflow-wrap:anywhere}
+  .tbl-wrap{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tbl-wrap::-webkit-scrollbar{display:none}
+  .tbl-wrap table{min-width:650px}
+  .tbl-wrap th:first-child,.tbl-wrap td:first-child{
+    position:sticky;left:0;z-index:2;background:#07131D;
+    box-shadow:1px 0 rgba(83,124,149,.24);
+  }
+  .inputs{
+    top:max(12px,env(safe-area-inset-top,0));
+    padding:0 10px calc(18px + env(safe-area-inset-bottom,0));
+    border-radius:22px 22px 0 0;
+  }
+  .drawer-head{margin:0 -10px 2px;padding:12px 14px}
+  .drawer-head button{width:44px;height:44px}
+  .grp-h{min-height:52px}
+  .f{margin-bottom:20px}
+  input[type=range]{height:34px}
+  .f-in,.scn-row input[type=text],.f-logval,.f-logadddate{font-size:16px}
+  .btn,.f-logaddbtn{min-height:44px}
+  .bottom-nav{
+    left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom,0));
+    min-height:var(--nav-h);padding:6px 4px;border-radius:20px;
+  }
+  .nav-item{min-height:52px;gap:3px;font-size:8px}
+  .nav-item svg{width:21px;height:21px}
+}
+@media (max-width:360px){
+  .appbar-copy span{display:none}
+  .titleblock{min-height:228px}
+  .tb-meta{right:10px}
+  .headline{left:14px;right:14px;bottom:14px}
+  .hl-v{font-size:46px}
+  .iso3d{height:245px}
+  .pace{grid-template-columns:1fr}
+  .pace-gauge-wrap{margin:auto}
+}
+
 </style>
 </head>
 <body>
@@ -1821,3 +1909,4 @@ if ("serviceWorker" in navigator) {
 </script>
 </body>
 </html>
+
