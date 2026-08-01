@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Retirement Engine Tests</title></head>
+<body>
+<pre id="results">Running…</pre>
+<script type="module">
+import { projectRetirement, runScenarioSet } from '../src/retirement-engine.js';
+import { andrewsProfile } from '../src/andrew-profile.js';
+
+const lines = [];
+let failures = 0;
+
+function test(name, fn) {
+  try {
+    fn();
+    lines.push(`PASS  ${name}`);
+  } catch (error) {
+    failures += 1;
+    lines.push(`FAIL  ${name}\n      ${error.message}`);
+  }
+}
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function near(actual, expected, tolerance, label) {
+  assert(Math.abs(actual - expected) <= tolerance, `${label}: expected ${expected}, got ${actual}`);
+}
+
+test('uses verified dated opening balance', () => {
+  const result = projectRetirement(andrewsProfile, 0);
+  const first401a = result.yearly[0].accounts.find(a => a.id === 'danny-401a');
+  near(first401a.endingBalance, 43385.58 + 9750, 0.01, '2026 401(a) balance');
+});
+
+test('stops contributions at retirement', () => {
+  const result = projectRetirement(andrewsProfile, 0.07);
+  const retirementRow = result.yearly.find(row => row.age === 60);
+  retirementRow.accounts.forEach(account => {
+    near(account.employeeContribution, 0, 0.001, `${account.name} retirement contribution`);
+  });
+});
+
+test('pension starts at age 60', () => {
+  const result = projectRetirement(andrewsProfile, 0.07);
+  const age59 = result.yearly.find(row => row.age === 59);
+  const age60 = result.yearly.find(row => row.age === 60);
+  near(age59.pensionAnnual, 0, 0.001, 'Age 59 pension');
+  near(age60.pensionAnnual, 5511 * 12, 0.001, 'Age 60 pension');
+});
+
+test('Social Security starts at age 62', () => {
+  const result = projectRetirement(andrewsProfile, 0.07);
+  const age61 = result.yearly.find(row => row.age === 61);
+  const age62 = result.yearly.find(row => row.age === 62);
+  near(age61.socialSecurityAnnual, 0, 0.001, 'Age 61 Social Security');
+  near(age62.socialSecurityAnnual, 4000 * 12, 0.001, 'Age 62 Social Security');
+});
+
+test('higher return produces a higher ending balance', () => {
+  const scenarios = runScenarioSet(andrewsProfile);
+  for (let i = 1; i < scenarios.length; i += 1) {
+    assert(scenarios[i].finalBalance > scenarios[i - 1].finalBalance, 'Scenario balances are not increasing');
+  }
+});
+
+test('after-tax affordability cap is respected', () => {
+  const capped = structuredClone(andrewsProfile);
+  capped.maxAnnualAfterTaxSavings = 1000;
+  const result = projectRetirement(capped, 0);
+  const firstYear = result.yearly[0];
+  const afterTax = firstYear.accounts
+    .filter(a => a.taxTreatment === 'roth' || a.taxTreatment === 'taxable')
+    .reduce((sum, a) => sum + a.employeeContribution, 0);
+  near(afterTax, 1000, 0.001, 'After-tax contributions');
+});
+
+lines.push(`\n${failures === 0 ? 'ALL TESTS PASSED' : `${failures} TEST(S) FAILED`}`);
+document.getElementById('results').textContent = lines.join('\n');
+if (failures) document.body.dataset.failed = 'true';
+</script>
+</body>
+</html>
