@@ -11,6 +11,25 @@ rounds of polish fixes on top of that. This package is the current, live
 state — treat it as the baseline, not a draft. The owner wants continued
 **visual/UX iteration**, not new features or changed math, unless asked.
 
+## This repo is public — never commit real personal data (read this first, too)
+
+A prior session committed a fully-identified household profile to this
+public repo: real first name, exact 401(a) balance/holdings/units/NAV,
+year-by-year contribution schedules, exact pension figure, and Social
+Security estimates for both spouses — plus a GitHub issue that additionally
+named the specific pension plan/employer and the spouse's exact fund
+allocation percentages. All of it was publicly visible to anyone on the
+internet, not just to whoever was authorized to work on this. It had to be
+deleted (the issue) and scrubbed (the committed files) after the fact.
+
+If you're building sample/test data for this project (profiles, fixtures,
+seed data, anything that looks like "a household"), it must be generic and
+round-numbered from the start — a fictional name, round dollar amounts, no
+real employer/plan/fund names. Real personal figures belong locally on the
+owner's machine, never in a commit, an issue, a comment, or a branch on this
+repo. If you're unsure whether a number is real or a placeholder, ask rather
+than commit it.
+
 ## Workflow reality check (read this first)
 
 The instinct is to say "open a PR" here, but in practice, the AI tool being
