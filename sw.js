@@ -1,7 +1,8 @@
-const CACHE = "retirement-tracker-v20-age-under-year";
+const CACHE = "retirement-tracker-v21-premium-skin";
 const ASSETS = [
   "./",
   "./index.html",
+  "./skin.css",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
@@ -26,6 +27,32 @@ self.addEventListener("activate", e => {
 
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
+
+  const url = new URL(e.request.url);
+  const isPage = e.request.mode === "navigate" || url.pathname.endsWith("/index.html") || url.pathname.endsWith("/retirement-tracker/");
+
+  if (isPage) {
+    e.respondWith(
+      fetch(e.request)
+        .then(async res => {
+          const html = await res.text();
+          const styled = html.includes("skin.css")
+            ? html
+            : html.replace("</head>", '<link rel="stylesheet" href="./skin.css?v=21"></head>');
+          const out = new Response(styled, {
+            status: res.status,
+            statusText: res.statusText,
+            headers: {"Content-Type": "text/html; charset=utf-8"}
+          });
+          const copy = out.clone();
+          caches.open(CACHE).then(c => c.put(e.request, copy));
+          return out;
+        })
+        .catch(() => caches.match(e.request).then(cached => cached || caches.match("./index.html")))
+    );
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then(cached => {
       const fetchPromise = fetch(e.request)
