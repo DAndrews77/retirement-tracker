@@ -10,11 +10,11 @@
 </head>
 <body>
 <main class="wrap">
-<section class="card"><h1>Phase 1 Retirement Engine</h1><div class="sub">Andrews household — test build, not the live dashboard</div></section>
+<section class="card"><h1>Phase 1 Retirement Engine</h1><div class="sub">Sample household — test build, not the live dashboard</div></section>
 <section class="card controls">
 <div class="field"><label>Desired monthly retirement spending</label><input id="spending" type="number" value="9000" step="100"></div>
 <div class="field"><label>Maximum annual after-tax savings</label><input id="cap" type="number" value="60000" step="500"></div>
-<div class="field"><label>Pension per month at 60</label><input id="pension" type="number" value="5511" step="50"></div>
+<div class="field"><label>Pension per month at 60</label><input id="pension" type="number" value="5500" step="50"></div>
 <div class="field"><label>Employer / union 401(a) per year</label><input id="employer" type="number" value="0" step="250"></div>
 </section>
 <section class="card"><div class="k">Return scenario</div><div id="scenarioButtons" class="scenario"></div></section>
@@ -26,7 +26,7 @@
 <div class="metric"><div class="k">Gap at retirement</div><div id="gap" class="v warn">—</div></div>
 </section>
 <section class="card"><div class="k">Account balances at retirement</div><div id="accounts" class="hero" style="margin-top:10px"></div></section>
-<section class="card scroll"><table><thead><tr><th>Year / Age</th><th>401(a)</th><th>Spouse Roth</th><th>Danny Roth</th><th>Total</th><th>Guaranteed / mo</th></tr></thead><tbody id="rows"></tbody></table></section>
+<section class="card scroll"><table><thead><tr><th>Year / Age</th><th>401(a)</th><th>Spouse Roth</th><th>Primary Roth</th><th>Total</th><th>Guaranteed / mo</th></tr></thead><tbody id="rows"></tbody></table></section>
 <section class="card note"><span class="status">Known limitations:</span> employer contribution is unverified; pension and Social Security are estimates; taxes, inflation-adjusted spending, withdrawals, healthcare, and Monte Carlo are not yet included. This page is for testing the deterministic accumulation and guaranteed-income foundation.</section>
 </main>
 <script type="module">
@@ -37,8 +37,8 @@ const inputs=['spending','cap','pension','employer'];let rate=.07;
 const buttons=document.getElementById('scenarioButtons');
 DEFAULT_RETURN_SCENARIOS.forEach(r=>{const b=document.createElement('button');b.textContent=`${Math.round(r*100)}%`;b.onclick=()=>{rate=r;renderButtons();render()};b.dataset.rate=r;buttons.appendChild(b)});
 function renderButtons(){[...buttons.children].forEach(b=>b.classList.toggle('active',Number(b.dataset.rate)===rate))}
-function buildProfile(){const p=structuredClone(andrewsProfile);p.desiredMonthlyRetirementSpending=Number(spending.value)||0;p.maxAnnualAfterTaxSavings=Number(cap.value)||0;p.pension.monthlyBenefit=Number(pension.value)||0;p.accounts.find(a=>a.id==='danny-401a').employerContribution={type:'annual',amount:Number(employer.value)||0};return p}
-function render(){const result=projectRetirement(buildProfile(),rate);const retirement=result.yearly.find(r=>r.age===60);const age62=result.yearly.find(r=>r.age===62)||result.yearly.at(-1);retBalance.textContent=money(retirement.totalBalance);age62Balance.textContent=money(age62.totalBalance);income60.textContent=money(retirement.guaranteedIncomeAnnual/12)+'/mo';income62.textContent=money(age62.guaranteedIncomeAnnual/12)+'/mo';gap.textContent=money(Math.max(0,retirement.desiredSpendingAnnual-retirement.guaranteedIncomeAnnual)/12)+'/mo';accounts.innerHTML=retirement.accounts.map(a=>`<div class="metric"><div class="k">${a.name}</div><div class="v">${money(a.endingBalance)}</div></div>`).join('');rows.innerHTML=result.yearly.map(y=>{const by=Object.fromEntries(y.accounts.map(a=>[a.id,a.endingBalance]));return `<tr><td>${y.year} / ${y.age}</td><td>${money(by['danny-401a'])}</td><td>${money(by['wife-roth'])}</td><td>${money(by['danny-roth'])}</td><td>${money(y.totalBalance)}</td><td>${money(y.guaranteedIncomeAnnual/12)}</td></tr>`}).join('')}
+function buildProfile(){const p=structuredClone(andrewsProfile);p.desiredMonthlyRetirementSpending=Number(spending.value)||0;p.maxAnnualAfterTaxSavings=Number(cap.value)||0;p.pension.monthlyBenefit=Number(pension.value)||0;p.accounts.find(a=>a.id==='primary-401a').employerContribution={type:'annual',amount:Number(employer.value)||0};return p}
+function render(){const result=projectRetirement(buildProfile(),rate);const retirement=result.yearly.find(r=>r.age===60);const age62=result.yearly.find(r=>r.age===62)||result.yearly.at(-1);retBalance.textContent=money(retirement.totalBalance);age62Balance.textContent=money(age62.totalBalance);income60.textContent=money(retirement.guaranteedIncomeAnnual/12)+'/mo';income62.textContent=money(age62.guaranteedIncomeAnnual/12)+'/mo';gap.textContent=money(Math.max(0,retirement.desiredSpendingAnnual-retirement.guaranteedIncomeAnnual)/12)+'/mo';accounts.innerHTML=retirement.accounts.map(a=>`<div class="metric"><div class="k">${a.name}</div><div class="v">${money(a.endingBalance)}</div></div>`).join('');rows.innerHTML=result.yearly.map(y=>{const by=Object.fromEntries(y.accounts.map(a=>[a.id,a.endingBalance]));return `<tr><td>${y.year} / ${y.age}</td><td>${money(by['primary-401a'])}</td><td>${money(by['spouse-roth'])}</td><td>${money(by['primary-roth'])}</td><td>${money(y.totalBalance)}</td><td>${money(y.guaranteedIncomeAnnual/12)}</td></tr>`}).join('')}
 inputs.forEach(id=>document.getElementById(id).addEventListener('input',render));renderButtons();render();
 </script>
 </body></html>

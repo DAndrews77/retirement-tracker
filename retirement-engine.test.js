@@ -12,7 +12,7 @@
     }
   }
 
-  close(engine.verifiedOpeningData.accounts[0].openingBalance, 43385.58);
+  close(engine.verifiedOpeningData.accounts[0].openingBalance, 40000);
   close(engine.annualizeMonthly(5500), 66000);
   close(engine.compound(100, 0.07, 1), 107);
 

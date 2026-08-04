@@ -97,13 +97,13 @@
   const verifiedOpeningData = Object.freeze({
     valuationDate: "2026-07-24",
     accounts: [{
-      id: "danny-401a",
-      name: "Danny 401(a)",
+      id: "primary-401a",
+      name: "Primary 401(a)",
       taxType: "pre-tax",
-      openingBalance: 43385.58,
-      holding: "VINIX",
-      units: 73.095,
-      nav: 593.55
+      openingBalance: 40000,
+      holding: "SAMPLE_INDEX",
+      units: 100,
+      nav: 400
     }]
   });
 

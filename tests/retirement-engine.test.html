@@ -30,8 +30,8 @@ function near(actual, expected, tolerance, label) {
 
 test('uses verified dated opening balance', () => {
   const result = projectRetirement(andrewsProfile, 0);
-  const first401a = result.yearly[0].accounts.find(a => a.id === 'danny-401a');
-  near(first401a.endingBalance, 43385.58 + 9750, 0.01, '2026 401(a) balance');
+  const first401a = result.yearly[0].accounts.find(a => a.id === 'primary-401a');
+  near(first401a.endingBalance, 40000 + 9500, 0.01, '2026 401(a) balance');
 });
 
 test('stops contributions at retirement', () => {
@@ -47,7 +47,7 @@ test('pension starts at age 60', () => {
   const age59 = result.yearly.find(row => row.age === 59);
   const age60 = result.yearly.find(row => row.age === 60);
   near(age59.pensionAnnual, 0, 0.001, 'Age 59 pension');
-  near(age60.pensionAnnual, 5511 * 12, 0.001, 'Age 60 pension');
+  near(age60.pensionAnnual, 5500 * 12, 0.001, 'Age 60 pension');
 });
 
 test('Social Security starts at age 62', () => {

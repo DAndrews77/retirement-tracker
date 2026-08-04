@@ -1,13 +1,11 @@
 # Retirement Engine Phase 1
 
-Implementation work is tracked in Issue #1.
-
-Verified opening data:
-- 401(a) balance: $43,385.58
+Sample opening data (see `src/andrew-profile.js` for the placeholder profile
+used by the test dashboard — real personal figures are kept local, not
+committed to this public repo):
+- 401(a) balance: $40,000 (sample)
 - Valuation date: 2026-07-24
-- Holding: VINIX
-- Units: 73.0950
-- NAV: $593.55
+- Holding: sample broad-market index fund
 
 Phase 1 scope:
 - Account-level deterministic projection engine
