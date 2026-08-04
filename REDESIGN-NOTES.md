@@ -11,6 +11,21 @@ rounds of polish fixes on top of that. This package is the current, live
 state — treat it as the baseline, not a draft. The owner wants continued
 **visual/UX iteration**, not new features or changed math, unless asked.
 
+## This tool is personal-use only — a separate tool already covers "anyone"
+
+Retirement Tracker is meant to stay a single-household, personal dashboard —
+not to be productized, genericized, or given a from-scratch onboarding flow
+for other users. That need is already met by a **separate** tool and repo:
+[Retirement Planner](https://github.com/DAndrews77/retirement-planner-all)
+(live at dandrews77.github.io/retirement-planner-all), which exists
+specifically for any user to enter their own data from scratch. If a task
+here starts to look like "let any household use this," it belongs in the
+Retirement Planner repo instead, not here. A more sophisticated personal
+engine (taxes, RMDs, Monte Carlo, allocation analysis, etc.) can still be a
+legitimate future direction for *this* repo, as a personal-use upgrade — see
+the data-privacy section below for how to handle that without repeating the
+same mistake.
+
 ## This repo is public — never commit real personal data (read this first, too)
 
 A prior session committed a fully-identified household profile to this
