@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v22-skin-in-html";
+const CACHE = "retirement-tracker-v23-mountain-icon";
 const ASSETS = [
   "./",
   "./index.html",
