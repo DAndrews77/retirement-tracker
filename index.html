@@ -1169,13 +1169,13 @@ function trueYM(v){
    the pure formula gives 0.70 for everyone, while these statements imply 0.680
    and 0.644. Anchoring on the statement's own rows reproduces them exactly.
 
-   at62/atFRA come straight off each statement. atAge70 is not on hand yet, so the
-   delayed side falls back to SSA's standard +8%/yr credit (67→70 = +24%); replace
-   DELAYED_CREDIT with a measured at70/atFRA ratio once those rows are available. */
-const DELAYED_CREDIT = 1.24;
+   The delayed side diverges the same way: the standard +8%/yr credit implies 1.24
+   for everyone, while these statements imply 1.263 and 1.290. All three rows are
+   therefore read straight off each statement (ssa.gov Retirement Calculator, both
+   at the "Average Future Annual Salary" the statement defaults to). */
 const SS_STATEMENT = {
-  ss67: { at62: 2382, atFRA: 3503 },   // primary
-  wss:  { at62: 1279, atFRA: 1985 },   // spouse
+  ss67: { at62: 2382, atFRA: 3503, at70: 4424 },   // primary, FRA Oct 2048
+  wss:  { at62: 1279, atFRA: 1985, at70: 2560 },   // spouse,  FRA Jul 2046
 };
 
 /* Claim age uses the same "year.month" convention as Retirement Year (.01=Jan … .12=Dec).
@@ -1188,9 +1188,10 @@ function ssFactor(v, key){
 
   if (stmt){
     const r62 = stmt.at62 / stmt.atFRA;
+    const r70 = stmt.at70 / stmt.atFRA;
     if (age <= 62)  return r62;
     if (age <= fra) return r62 + (1 - r62) * (age - 62) / (fra - 62);
-    return 1 + (DELAYED_CREDIT - 1) * Math.min(age - fra, 3) / 3;
+    return 1 + (r70 - 1) * Math.min(age - fra, 3) / 3;
   }
 
   if (age >= fra) return 1 + Math.min(age - fra, 3) * 0.08;
