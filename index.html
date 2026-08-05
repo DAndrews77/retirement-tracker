@@ -488,8 +488,8 @@ button,input{font:inherit}
   content:"";position:absolute;top:50%;left:50%;width:220%;height:220%;
   background:url("hero-space.png") center/cover no-repeat;
   transform:translate(-50%,-50%) rotate(0deg);
-  transform-origin:center center;
-  animation:heroSpin 130s linear infinite;
+  transform-origin:158% 145%;
+  animation:heroSpin 20s ease-in-out infinite alternate;
   will-change:transform;
 }
 .titleblock::after{
@@ -501,7 +501,7 @@ button,input{font:inherit}
 }
 @keyframes heroSpin{
   from{transform:translate(-50%,-50%) rotate(0deg)}
-  to{transform:translate(-50%,-50%) rotate(360deg)}
+  to{transform:translate(-50%,-50%) rotate(-7deg)}
 }
 .tb-tracers{position:absolute;inset:0;overflow:hidden;z-index:1;pointer-events:none}
 .tb-tracer{
