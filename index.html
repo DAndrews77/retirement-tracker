@@ -123,7 +123,8 @@ body{
 .f-lock.locked .lock-open{display:none}
 .f-lock.locked .lock-closed{display:block}
 .f.locked input[type=range]{opacity:.35;pointer-events:none}
-.f.locked .f-in{opacity:.5;pointer-events:none;border-bottom-style:solid}
+.f.locked .f-v{opacity:.5}
+.f.locked .f-in{pointer-events:none;border-bottom-style:solid}
 .f-in{
   font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:600;color:var(--accent);
   background:transparent;border:0;border-bottom:1px dashed var(--rule);width:66px;text-align:right;
@@ -480,15 +481,48 @@ button,input{font:inherit}
 .titleblock{
   position:relative;display:block;overflow:hidden;
   min-height:292px;margin:0;border:0;border-radius:0 0 28px 28px;
-  background:
-    linear-gradient(180deg,rgba(2,8,14,.02) 0%,rgba(2,8,14,.20) 42%,rgba(2,8,14,.98) 100%),
-    linear-gradient(90deg,rgba(2,8,14,.92) 0%,rgba(2,8,14,.64) 38%,rgba(2,8,14,.04) 75%),
-    url("hero-space.png") center/cover no-repeat;
+  background:#02070D;
   box-shadow:inset 0 -1px 0 rgba(92,134,158,.18);
+}
+.titleblock::before{
+  content:"";position:absolute;top:50%;left:50%;width:220%;height:220%;
+  background:url("hero-space.png") center/cover no-repeat;
+  transform:translate(-50%,-50%) rotate(0deg);
+  transform-origin:158% 145%;
+  animation:heroSpin 20s ease-in-out infinite alternate;
+  will-change:transform;
 }
 .titleblock::after{
   content:"";position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(440px 180px at 74% 55%,rgba(255,173,57,.12),transparent 60%);
+  background:
+    linear-gradient(180deg,rgba(2,8,14,.02) 0%,rgba(2,8,14,.20) 42%,rgba(2,8,14,.98) 100%),
+    linear-gradient(90deg,rgba(2,8,14,.92) 0%,rgba(2,8,14,.64) 38%,rgba(2,8,14,.04) 75%),
+    radial-gradient(440px 180px at 74% 55%,rgba(255,173,57,.12),transparent 60%);
+}
+@keyframes heroSpin{
+  from{transform:translate(-50%,-50%) rotate(0deg)}
+  to{transform:translate(-50%,-50%) rotate(-7deg)}
+}
+.tb-tracers{position:absolute;inset:0;overflow:hidden;z-index:1;pointer-events:none}
+.tb-tracer{
+  position:absolute;height:1.5px;width:90px;top:0;left:-25%;
+  background:linear-gradient(90deg,transparent,rgba(180,230,255,.95),transparent);
+  border-radius:2px;filter:drop-shadow(0 0 4px rgba(160,220,255,.75));
+  opacity:0;animation:tbTracer 7s linear infinite;
+}
+.tb-tracer.t1{top:24%;animation-delay:0s}
+.tb-tracer.t2{top:47%;width:70px;animation-delay:2.6s}
+.tb-tracer.t3{top:67%;width:110px;animation-delay:4.8s}
+@keyframes tbTracer{
+  0%{transform:translate(0,0);opacity:0}
+  6%{opacity:.85}
+  45%{opacity:.85}
+  62%{opacity:0}
+  100%{transform:translate(340px,-16px);opacity:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .titleblock::before{animation:none}
+  .tb-tracer{animation:none;opacity:0}
 }
 .tb-main{position:relative;z-index:2;padding:20px 20px 0;min-height:68px;background:none}
 .tb-title{font-family:"IBM Plex Mono",monospace;font-size:10px;line-height:1.1;letter-spacing:.18em;color:var(--accent);font-weight:600;text-transform:uppercase;margin:0}
@@ -714,6 +748,7 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 </svg>
 <div class="appbar-copy"><strong>Retirement Tracker</strong><span>Plan Today. Live Tomorrow.</span></div>
 </header><div class="titleblock">
+<div class="tb-tracers" aria-hidden="true"><span class="tb-tracer t1"></span><span class="tb-tracer t2"></span><span class="tb-tracer t3"></span></div>
 <div class="tb-main">
 
 <h1 class="tb-title">RETIREMENT OUTLOOK</h1><div class="tb-sub">Your Projected Destination</div>
@@ -838,19 +873,19 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <button class="grp-h" data-t=""><span class="grp-icon" style="--ic:#C4E538"><svg fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.4" viewbox="0 0 16 16"><rect height="10" rx="1.3" width="12.8" x="1.6" y="3"></rect><circle cx="5.2" cy="7" fill="currentColor" r="1.4" stroke="none"></circle><path d="M2.8 11.2c.4-1.4 1.4-2.1 2.4-2.1s2 .7 2.4 2.1"></path><path d="M9.4 6h3.2M9.4 8.4h3.2"></path></svg></span>Social Security<span class="grp-tri">▾</span></button>
 <div class="grp-b">
 <div class="f">
-<div class="f-top"><span class="f-l">Your SS (at Age 67)</span><span class="f-v">$<input class="f-in" id="v-ss67" inputmode="decimal" type="text"/>/mo</span></div>
+<div class="f-top"><span class="f-l">Your SS (at Age 67)</span><span class="f-v-wrap"><span class="f-v">$<input class="f-in" id="v-ss67" inputmode="decimal" type="text"/>/mo</span><span class="f-hint" id="ss67-adj"></span></span></div>
 <input id="ss67" max="6000" min="0" step="any" type="range" value="3503"/>
 </div>
 <div class="f">
-<div class="f-top"><span class="f-l">Your Claim Age</span><span class="f-v"><input class="f-in" id="v-ssageYou" max="70.12" min="62.01" step="0.01" type="number"/></span></div>
+<div class="f-top"><span class="f-l">Your Claim Age</span><span class="f-v-wrap"><span class="f-v"><input class="f-in" id="v-ssageYou" max="70.12" min="62.01" step="0.01" type="number"/></span><span class="f-hint" id="ssageYou-adj"></span></span></div>
 <input id="ssageYou" max="107" min="0" step="any" type="range" value="60"/>
 </div>
 <div class="f">
-<div class="f-top"><span class="f-l">Spouse SS (at Age 67)</span><span class="f-v">$<input class="f-in" id="v-wss" inputmode="decimal" type="text"/>/mo</span></div>
+<div class="f-top"><span class="f-l">Spouse SS (at Age 67)</span><span class="f-v-wrap"><span class="f-v">$<input class="f-in" id="v-wss" inputmode="decimal" type="text"/>/mo</span><span class="f-hint" id="wss-adj"></span></span></div>
 <input id="wss" max="4000" min="0" step="any" type="range" value="1985"/>
 </div>
 <div class="f">
-<div class="f-top"><span class="f-l">Spouse Claim Age</span><span class="f-v"><input class="f-in" id="v-ssageSpouse" max="70.12" min="62.01" step="0.01" type="number"/></span></div>
+<div class="f-top"><span class="f-l">Spouse Claim Age</span><span class="f-v-wrap"><span class="f-v"><input class="f-in" id="v-ssageSpouse" max="70.12" min="62.01" step="0.01" type="number"/></span><span class="f-hint" id="ssageSpouse-adj"></span></span></div>
 <input id="ssageSpouse" max="107" min="0" step="any" type="range" value="60"/>
 </div>
 </div>
@@ -961,7 +996,7 @@ const ageAtYM = (birth, year, month) => (year - birth.year) + (month - birth.mon
 /* Ridge order is back-to-front in the terrain field: largest account sits at the
    back so the surface reads as receding depth rather than a wall. */
 const ACCOUNTS = [
-  {k:"p401", label:"401(a)",      fill:"#E8F0E8"},  // white
+  {k:"p401", label:"401(a)",      fill:"#7FB3F0"},  // ice blue
   {k:"wroth",label:"Spouse Roth", fill:"#2DD4BF"},  // teal
   {k:"droth",label:"Your Roth",   fill:"#C4E538"},  // chartreuse
   {k:"sep",  label:"SEP IRA",     fill:"#A855F7"},  // violet
@@ -1522,6 +1557,17 @@ function syncLabels(){
     if (box && box !== active) box.value = fmtBox(S[key], FIELDS[key].dec, FIELDS[key].money);
   }
   $("v-sepcap").textContent = money(S.sinc * S.seppct/100);
+
+  /* Your SS $/mo and Your Claim Age are two independent inputs (the statement
+     amount vs. when you take it), but they combine into one number — show that
+     combined, age-adjusted payout under both fields so dragging either one
+     visibly moves the other's hint, keeping the link obvious. */
+  const yourAdj = money(S.ss67 * ssFactor(S.ssageYou));
+  const spouseAdj = money(S.wss * ssFactor(S.ssageSpouse));
+  const ss67Adj = $("ss67-adj"); if (ss67Adj) ss67Adj.textContent = `→ ${yourAdj}/mo`;
+  const ssageYouAdj = $("ssageYou-adj"); if (ssageYouAdj) ssageYouAdj.textContent = `→ ${yourAdj}/mo`;
+  const wssAdj = $("wss-adj"); if (wssAdj) wssAdj.textContent = `→ ${spouseAdj}/mo`;
+  const ssageSpouseAdj = $("ssageSpouse-adj"); if (ssageSpouseAdj) ssageSpouseAdj.textContent = `→ ${spouseAdj}/mo`;
 }
 
 const YM_INDEX_KEYS = ["retire", "ssageYou", "ssageSpouse"];   // sliders that move over a constrained index

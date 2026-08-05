@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v24-single-mountain";
+const CACHE = "retirement-tracker-v25-ui-polish";
 const ASSETS = [
   "./",
   "./index.html",
