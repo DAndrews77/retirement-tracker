@@ -37,16 +37,23 @@ body{
   box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 20px rgba(0,0,0,.3)!important;
 }
 .appbar-copy strong{letter-spacing:-.03em}
+/* The hero photo is painted by .tb-sky, which rotates; repeating it here as a
+   static background would cover .tb-sky and freeze the planet. The darkening
+   that used to sit on top of it now rides on .tb-shade, above .tb-sky. */
 .titleblock{
   min-height:320px!important;
-  background:
-    linear-gradient(180deg,rgba(3,5,9,.02),rgba(3,5,9,.18) 42%,rgba(3,5,9,.98) 100%),
-    linear-gradient(90deg,rgba(3,5,9,.95),rgba(3,5,9,.56) 42%,rgba(3,5,9,.08) 76%),
-    url("hero-space.png") center/cover no-repeat!important;
+  background:#030509!important;
   border-radius:0 0 34px 34px!important;
 }
+.tb-shade{
+  background:
+    linear-gradient(180deg,rgba(3,5,9,.02),rgba(3,5,9,.18) 42%,rgba(3,5,9,.98) 100%),
+    linear-gradient(90deg,rgba(3,5,9,.95),rgba(3,5,9,.56) 42%,rgba(3,5,9,.08) 76%)!important;
+}
+/* z-index keeps this bloom above .tb-sky and .tb-shade; without it a pseudo-element
+   paints before the element's real children and the photo would cover it. */
 .titleblock::before{
-  content:"";position:absolute;inset:0;pointer-events:none;
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
   background:
     radial-gradient(420px 220px at 78% 44%,rgba(103,183,255,.16),transparent 62%),
     linear-gradient(115deg,transparent 20%,rgba(255,255,255,.025) 48%,transparent 70%);
