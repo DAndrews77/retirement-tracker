@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v23-mountain-icon";
+const CACHE = "retirement-tracker-v24-single-mountain";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const ASSETS = [
   "./icon-512.png",
   "./icon-512-maskable.png",
   "./apple-touch-icon.png",
+  "./favicon.svg",
   "./hero-space.png"
 ];
 
