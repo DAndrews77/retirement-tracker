@@ -1161,12 +1161,38 @@ function trueYM(v){
   return year + (month - 1) / 12;
 }
 
-/* Continuous SS adjustment off the FRA (67) benefit. Early: −6.667%/yr for the
-   first 3 yrs, then −5%/yr (age 62 = −30%). Delayed: +8%/yr to age 70 (= +24%).
-   Claim age uses the same "year.month" convention as Retirement Year (.01=Jan … .12=Dec). */
-function ssFactor(v){
+/* An SSA statement prints a monthly amount at 62, at FRA (67) and at 70, and
+   those rows are NOT one number scaled by the actuarial reduction. Each row
+   assumes you keep earning until that age, so the age-62 row carries five fewer
+   years of earnings on top of the −30% reduction — and by a different amount for
+   each earnings history. Deriving 62 from the 67 figure therefore overstates it:
+   the pure formula gives 0.70 for everyone, while these statements imply 0.680
+   and 0.644. Anchoring on the statement's own rows reproduces them exactly.
+
+   at62/atFRA come straight off each statement. atAge70 is not on hand yet, so the
+   delayed side falls back to SSA's standard +8%/yr credit (67→70 = +24%); replace
+   DELAYED_CREDIT with a measured at70/atFRA ratio once those rows are available. */
+const DELAYED_CREDIT = 1.24;
+const SS_STATEMENT = {
+  ss67: { at62: 2382, atFRA: 3503 },   // primary
+  wss:  { at62: 1279, atFRA: 1985 },   // spouse
+};
+
+/* Claim age uses the same "year.month" convention as Retirement Year (.01=Jan … .12=Dec).
+   `key` selects whose statement to read; without one this falls back to the generic
+   SSA formula (−6.667%/yr for the first 3 yrs, then −5%/yr; +8%/yr past FRA). */
+function ssFactor(v, key){
   const age = trueYM(v);
   const fra = 67;
+  const stmt = SS_STATEMENT[key];
+
+  if (stmt){
+    const r62 = stmt.at62 / stmt.atFRA;
+    if (age <= 62)  return r62;
+    if (age <= fra) return r62 + (1 - r62) * (age - 62) / (fra - 62);
+    return 1 + (DELAYED_CREDIT - 1) * Math.min(age - fra, 3) / 3;
+  }
+
   if (age >= fra) return 1 + Math.min(age - fra, 3) * 0.08;
   const early = fra - age;
   const first = Math.min(early, 3);
@@ -1506,8 +1532,8 @@ function drawIncome(a, retireAge, retireMonth, retireYearInt){
   // real ages at the retirement instant, from actual birthdates — not a rough offset
   const yourAgeAtRetire   = ageAtYM(YOUR_BIRTH,   retireYearInt, retireMonth);
   const spouseAgeAtRetire = ageAtYM(SPOUSE_BIRTH, retireYearInt, retireMonth);
-  const yourSS   = yourAgeAtRetire   >= trueYM(S.ssageYou)    ? S.ss67 * ssFactor(S.ssageYou)    : 0;
-  const spouseSS = spouseAgeAtRetire >= trueYM(S.ssageSpouse) ? S.wss  * ssFactor(S.ssageSpouse) : 0;
+  const yourSS   = yourAgeAtRetire   >= trueYM(S.ssageYou)    ? S.ss67 * ssFactor(S.ssageYou, "ss67")   : 0;
+  const spouseSS = spouseAgeAtRetire >= trueYM(S.ssageSpouse) ? S.wss  * ssFactor(S.ssageSpouse, "wss") : 0;
   const total = draw + pension + yourSS + spouseSS;
 
   const cells = [
@@ -1555,7 +1581,7 @@ const fmtBox = (v, dec, isMoney) => isMoney
    S.ss67 / S.wss keep storing the age-67 benefit the projection needs, and the
    two views convert through the claim age's own adjustment factor. */
 const SS_CLAIM_OF = { ss67:"ssageYou", wss:"ssageSpouse" };
-const ssScale  = key => SS_CLAIM_OF[key] ? ssFactor(S[SS_CLAIM_OF[key]]) : 1;
+const ssScale  = key => SS_CLAIM_OF[key] ? ssFactor(S[SS_CLAIM_OF[key]], key) : 1;
 const shownVal = key => S[key] * ssScale(key);          // stored → displayed
 const storedVal = (key, shown) => shown / ssScale(key); // displayed → stored
 
