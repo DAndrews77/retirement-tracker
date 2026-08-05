@@ -873,19 +873,19 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <button class="grp-h" data-t=""><span class="grp-icon" style="--ic:#C4E538"><svg fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.4" viewbox="0 0 16 16"><rect height="10" rx="1.3" width="12.8" x="1.6" y="3"></rect><circle cx="5.2" cy="7" fill="currentColor" r="1.4" stroke="none"></circle><path d="M2.8 11.2c.4-1.4 1.4-2.1 2.4-2.1s2 .7 2.4 2.1"></path><path d="M9.4 6h3.2M9.4 8.4h3.2"></path></svg></span>Social Security<span class="grp-tri">▾</span></button>
 <div class="grp-b">
 <div class="f">
-<div class="f-top"><span class="f-l">Your SS (at Age 67)</span><span class="f-v-wrap"><span class="f-v">$<input class="f-in" id="v-ss67" inputmode="decimal" type="text"/>/mo</span><span class="f-hint" id="ss67-adj"></span></span></div>
+<div class="f-top"><span class="f-l">Your SS</span><span class="f-v">$<input class="f-in" id="v-ss67" inputmode="decimal" type="text"/>/mo</span></div>
 <input id="ss67" max="6000" min="0" step="any" type="range" value="3503"/>
 </div>
 <div class="f">
-<div class="f-top"><span class="f-l">Your Claim Age</span><span class="f-v-wrap"><span class="f-v"><input class="f-in" id="v-ssageYou" max="70.12" min="62.01" step="0.01" type="number"/></span><span class="f-hint" id="ssageYou-adj"></span></span></div>
+<div class="f-top"><span class="f-l">Your Claim Age</span><span class="f-v"><input class="f-in" id="v-ssageYou" max="70.12" min="62.01" step="0.01" type="number"/></span></div>
 <input id="ssageYou" max="107" min="0" step="any" type="range" value="60"/>
 </div>
 <div class="f">
-<div class="f-top"><span class="f-l">Spouse SS (at Age 67)</span><span class="f-v-wrap"><span class="f-v">$<input class="f-in" id="v-wss" inputmode="decimal" type="text"/>/mo</span><span class="f-hint" id="wss-adj"></span></span></div>
+<div class="f-top"><span class="f-l">Spouse SS</span><span class="f-v">$<input class="f-in" id="v-wss" inputmode="decimal" type="text"/>/mo</span></div>
 <input id="wss" max="4000" min="0" step="any" type="range" value="1985"/>
 </div>
 <div class="f">
-<div class="f-top"><span class="f-l">Spouse Claim Age</span><span class="f-v-wrap"><span class="f-v"><input class="f-in" id="v-ssageSpouse" max="70.12" min="62.01" step="0.01" type="number"/></span><span class="f-hint" id="ssageSpouse-adj"></span></span></div>
+<div class="f-top"><span class="f-l">Spouse Claim Age</span><span class="f-v"><input class="f-in" id="v-ssageSpouse" max="70.12" min="62.01" step="0.01" type="number"/></span></div>
 <input id="ssageSpouse" max="107" min="0" step="any" type="range" value="60"/>
 </div>
 </div>
@@ -1550,24 +1550,29 @@ const fmtBox = (v, dec, isMoney) => isMoney
   ? v.toLocaleString("en-US", {minimumFractionDigits:dec, maximumFractionDigits:dec})
   : v.toFixed(dec);
 
+/* The SS amount fields show the actual monthly payout at the chosen claim age,
+   not the age-67 statement figure, so the number moves when the claim age does.
+   S.ss67 / S.wss keep storing the age-67 benefit the projection needs, and the
+   two views convert through the claim age's own adjustment factor. */
+const SS_CLAIM_OF = { ss67:"ssageYou", wss:"ssageSpouse" };
+const ssScale  = key => SS_CLAIM_OF[key] ? ssFactor(S[SS_CLAIM_OF[key]]) : 1;
+const shownVal = key => S[key] * ssScale(key);          // stored → displayed
+const storedVal = (key, shown) => shown / ssScale(key); // displayed → stored
+
 function syncLabels(){
   const active = document.activeElement;
   for (const key in FIELDS){
     const box = $("v-" + key);
-    if (box && box !== active) box.value = fmtBox(S[key], FIELDS[key].dec, FIELDS[key].money);
+    if (box && box !== active) box.value = fmtBox(shownVal(key), FIELDS[key].dec, FIELDS[key].money);
   }
   $("v-sepcap").textContent = money(S.sinc * S.seppct/100);
 
-  /* Your SS $/mo and Your Claim Age are two independent inputs (the statement
-     amount vs. when you take it), but they combine into one number — show that
-     combined, age-adjusted payout under both fields so dragging either one
-     visibly moves the other's hint, keeping the link obvious. */
-  const yourAdj = money(S.ss67 * ssFactor(S.ssageYou));
-  const spouseAdj = money(S.wss * ssFactor(S.ssageSpouse));
-  const ss67Adj = $("ss67-adj"); if (ss67Adj) ss67Adj.textContent = `→ ${yourAdj}/mo`;
-  const ssageYouAdj = $("ssageYou-adj"); if (ssageYouAdj) ssageYouAdj.textContent = `→ ${yourAdj}/mo`;
-  const wssAdj = $("wss-adj"); if (wssAdj) wssAdj.textContent = `→ ${spouseAdj}/mo`;
-  const ssageSpouseAdj = $("ssageSpouse-adj"); if (ssageSpouseAdj) ssageSpouseAdj.textContent = `→ ${spouseAdj}/mo`;
+  // move each SS amount slider to match its new payout when the claim age changes;
+  // the one actively being dragged is left alone so it can't fight the pointer
+  for (const key in SS_CLAIM_OF){
+    const rng = $(key);
+    if (rng && rng !== active) rng.value = shownVal(key);
+  }
 }
 
 const YM_INDEX_KEYS = ["retire", "ssageYou", "ssageSpouse"];   // sliders that move over a constrained index
@@ -1576,7 +1581,7 @@ function syncInputs(){
   for (const key in FIELDS){
     if (YM_INDEX_KEYS.includes(key)) continue;
     const el = $(key);
-    if (el) el.value = S[key];
+    if (el) el.value = shownVal(key);
   }
   if (retireSlider) retireSlider.value = retireIndexOf(S.retire);
   if ($("ssageYou")) $("ssageYou").value = ssAgeIndexOf(S.ssageYou);
@@ -1590,7 +1595,7 @@ Object.keys(FIELDS).concat(["seppct"]).forEach(key => {
   if (YM_INDEX_KEYS.includes(key)) return;   // wired separately below — these sliders move over an index, not the raw value
   const el = $(key);
   if (!el) return;
-  el.addEventListener("input", e => { if (LOCKED.has(key)) return; S[key] = parseFloat(e.target.value); update(); });
+  el.addEventListener("input", e => { if (LOCKED.has(key)) return; S[key] = storedVal(key, parseFloat(e.target.value)); update(); });
 });
 
 const retireSlider = $("retire");
@@ -1631,15 +1636,20 @@ for (const key in FIELDS){
     if (LOCKED.has(key)) return;
     let v = parseBox();
     if (isNaN(v)) return;                 // let them keep typing
-    v = clamp(v); S[key] = v;
+    v = clamp(v); S[key] = storedVal(key, v);
     syncSlider(v);
     update();                             // syncLabels skips the box being typed in
   });
   box.addEventListener("change", () => {  // on blur / Enter, normalise the box
     if (LOCKED.has(key)) return;
     let v = parseBox();
-    if (isNaN(v)) v = DEFAULTS[key];
-    v = clamp(v); S[key] = v;
+    if (isNaN(v)){                        // DEFAULTS holds stored values, so restore directly
+      S[key] = DEFAULTS[key];
+      syncSlider(shownVal(key));
+      update();
+      return;
+    }
+    v = clamp(v); S[key] = storedVal(key, v);
     syncSlider(v);
     update();
   });
@@ -1780,7 +1790,7 @@ function fieldLogRenderPanel(key){
   panel.querySelector(".f-logaddbtn").addEventListener("click", () => {
     const d = panel.querySelector(".f-logadddate").value;
     if (!d) return;
-    if (LOG[key][d] == null) LOG[key][d] = rnd(S[key] ?? 0, dec);
+    if (LOG[key][d] == null) LOG[key][d] = rnd(shownVal(key) ?? 0, dec);   // log what the field shows
     fieldLogPersist();
     fieldLogRenderPanel(key);
     renderActivityLog();
