@@ -8,6 +8,7 @@
 <link href="manifest.json" rel="manifest"/>
 <meta content="#02080E" name="theme-color"/>
 <link href="apple-touch-icon.png" rel="apple-touch-icon"/>
+<link href="favicon.svg" rel="icon" type="image/svg+xml"/>
 <meta content="yes" name="apple-mobile-web-app-capable"/>
 <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="Retirement" name="apple-mobile-web-app-title"/>
@@ -465,6 +466,17 @@ button,input{font:inherit}
 .appbar-copy{min-width:0;display:flex;flex-direction:column;flex:1;line-height:1.15}
 .appbar-copy strong{font-size:18px;letter-spacing:-.015em}
 .appbar-copy span{margin-top:3px;color:var(--graphite-2);font-size:12px}
+.brand-mark{width:34px;height:34px;flex:0 0 auto;overflow:visible}
+.brand-mark .bm-ring{fill:none;stroke:#7CF2C0;stroke-width:1.6;animation:bmPing 2.6s ease-out infinite}
+.brand-mark .bm-ring2{animation-delay:1.3s}
+.brand-mark .bm-core{animation:bmCore 2.6s ease-in-out infinite}
+.brand-mark .bm-glow{animation:bmGlow 2.6s ease-in-out infinite}
+@keyframes bmPing{0%{r:2.5;stroke-opacity:.9}70%,100%{r:22;stroke-opacity:0}}
+@keyframes bmCore{0%,100%{opacity:.75;r:1.4}50%{opacity:1;r:2}}
+@keyframes bmGlow{0%,100%{opacity:.75}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  .brand-mark .bm-ring,.brand-mark .bm-core,.brand-mark .bm-glow{animation:none}
+}
 .titleblock{
   position:relative;display:block;overflow:hidden;
   min-height:292px;margin:0;border:0;border-radius:0 0 28px 28px;
@@ -676,6 +688,30 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <button aria-label="Open retirement inputs" class="appbar-btn" id="open-inputs" type="button">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
 </button>
+<svg aria-hidden="true" class="brand-mark" viewbox="0 0 100 100">
+<defs>
+<radialGradient cx="50%" cy="50%" id="bmGlow" r="50%">
+<stop offset="0%" stop-color="#8FF7CE" stop-opacity="0.65"></stop>
+<stop offset="45%" stop-color="#43D9B8" stop-opacity="0.28"></stop>
+<stop offset="100%" stop-color="#43D9B8" stop-opacity="0"></stop>
+</radialGradient>
+<linearGradient id="bmFace" x1="0" x2="1" y1="0" y2="1">
+<stop offset="0%" stop-color="#4C6478"></stop>
+<stop offset="100%" stop-color="#212B34"></stop>
+</linearGradient>
+<linearGradient id="bmEdge" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#8FE0FF"></stop>
+<stop offset="100%" stop-color="#2FD9B9"></stop>
+</linearGradient>
+</defs>
+<circle class="bm-glow" cx="46" cy="22" fill="url(#bmGlow)" r="29"></circle>
+<circle class="bm-ring" cx="46" cy="27" r="3"></circle>
+<circle class="bm-ring bm-ring2" cx="46" cy="27" r="3"></circle>
+<polygon fill="url(#bmFace)" points="46,27 21,76 79,76"></polygon>
+<path d="M46,27 L21,76" fill="none" stroke="url(#bmEdge)" stroke-linecap="round" stroke-width="1.8"></path>
+<path d="M46,27 L40,37 L44,35 L46,39 L48,35 L51,37 Z" fill="#9FF6D6"></path>
+<circle class="bm-core" cx="46" cy="27" fill="#EFFFF7" r="1.4"></circle>
+</svg>
 <div class="appbar-copy"><strong>Retirement Tracker</strong><span>Plan Today. Live Tomorrow.</span></div>
 </header><div class="titleblock">
 <div class="tb-main">
