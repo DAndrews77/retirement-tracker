@@ -481,57 +481,15 @@ button,input{font:inherit}
 .titleblock{
   position:relative;display:block;overflow:hidden;
   min-height:292px;margin:0;border:0;border-radius:0 0 28px 28px;
-  background:#02070D;
-  box-shadow:inset 0 -1px 0 rgba(92,134,158,.18);
-}
-/* The rotating photo lives in its own element rather than .titleblock's
-   background or a pseudo-element: skin.css restyles .titleblock, ::before and
-   ::after with !important, so a photo placed in any of those gets repainted as
-   a static layer and only the leftover gradient appears to move. .tb-shade
-   carries the darkening that used to ride along with that background, since a
-   parent's background would otherwise paint behind .tb-sky. */
-.tb-sky{
-  position:absolute;top:50%;left:50%;width:220%;height:220%;
-  background:url("hero-space.png") center/cover no-repeat;
-  transform:translate(-50%,-50%) rotate(0deg);
-  transform-origin:130% 125%;
-  animation:heroSpin 13s ease-in-out infinite alternate;
-  will-change:transform;
-}
-.tb-shade{
-  position:absolute;inset:0;pointer-events:none;
   background:
     linear-gradient(180deg,rgba(2,8,14,.02) 0%,rgba(2,8,14,.20) 42%,rgba(2,8,14,.98) 100%),
-    linear-gradient(90deg,rgba(2,8,14,.92) 0%,rgba(2,8,14,.64) 38%,rgba(2,8,14,.04) 75%);
+    linear-gradient(90deg,rgba(2,8,14,.92) 0%,rgba(2,8,14,.64) 38%,rgba(2,8,14,.04) 75%),
+    url("hero-space.png") center/cover no-repeat;
+  box-shadow:inset 0 -1px 0 rgba(92,134,158,.18);
 }
 .titleblock::after{
   content:"";position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(440px 180px at 74% 55%,rgba(255,173,57,.12),transparent 60%);
-}
-@keyframes heroSpin{
-  from{transform:translate(-50%,-50%) rotate(0deg)}
-  to{transform:translate(-50%,-50%) rotate(-18deg)}
-}
-.tb-tracers{position:absolute;inset:0;overflow:hidden;z-index:1;pointer-events:none}
-.tb-tracer{
-  position:absolute;height:1.5px;width:90px;top:0;left:-25%;
-  background:linear-gradient(90deg,transparent,rgba(180,230,255,.95),transparent);
-  border-radius:2px;filter:drop-shadow(0 0 4px rgba(160,220,255,.75));
-  opacity:0;animation:tbTracer 7s linear infinite;
-}
-.tb-tracer.t1{top:24%;animation-delay:0s}
-.tb-tracer.t2{top:47%;width:70px;animation-delay:2.6s}
-.tb-tracer.t3{top:67%;width:110px;animation-delay:4.8s}
-@keyframes tbTracer{
-  0%{transform:translate(0,0);opacity:0}
-  6%{opacity:.85}
-  45%{opacity:.85}
-  62%{opacity:0}
-  100%{transform:translate(340px,-16px);opacity:0}
-}
-@media (prefers-reduced-motion:reduce){
-  .tb-sky{animation:none}
-  .tb-tracer{animation:none;opacity:0}
 }
 .tb-main{position:relative;z-index:2;padding:20px 20px 0;min-height:68px;background:none}
 .tb-title{font-family:"IBM Plex Mono",monospace;font-size:10px;line-height:1.1;letter-spacing:.18em;color:var(--accent);font-weight:600;text-transform:uppercase;margin:0}
@@ -757,9 +715,6 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 </svg>
 <div class="appbar-copy"><strong>Retirement Tracker</strong><span>Plan Today. Live Tomorrow.</span></div>
 </header><div class="titleblock">
-<div class="tb-sky" aria-hidden="true"></div>
-<div class="tb-shade" aria-hidden="true"></div>
-<div class="tb-tracers" aria-hidden="true"><span class="tb-tracer t1"></span><span class="tb-tracer t2"></span><span class="tb-tracer t3"></span></div>
 <div class="tb-main">
 
 <h1 class="tb-title">RETIREMENT OUTLOOK</h1><div class="tb-sub">Your Projected Destination</div>
