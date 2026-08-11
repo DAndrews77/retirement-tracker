@@ -768,7 +768,7 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 </div>
 <div class="f">
 <div class="f-top"><span class="f-l">Elective Rate Now</span><span class="f-v">$<input class="f-in" id="v-elec" inputmode="decimal" type="text"/>/hr</span></div>
-<input id="elec" max="12" min="1" step="any" type="range" value="5"/>
+<input id="elec" max="15" min="0" step="any" type="range" value="5"/>
 </div>
 <div class="f">
 <div class="f-top"><span class="f-l">Step-Up Each July</span><span class="f-v">$<input class="f-in" id="v-step" inputmode="decimal" type="text"/>/hr</span></div>
@@ -950,7 +950,11 @@ if (typeof window.storage === "undefined"){
 const BASE_YEAR = 2026;
 const AGE_AT_BASE = 44;        // your age entering 2026
 const SPOUSE_OFFSET = 2;       // rough whole-year gap, used only for the 50+ Roth catch-up check during accumulation
-const CAP_CEILING = 11;        // plan's max elective $/hr into the 401(a); overflow above this redirects elsewhere
+/* Plan max elective $/hr into the 401(a); anything the schedule would have
+   contributed above this redirects to the Roth/SEP/brokerage waterfall instead.
+   Commercial Journeymen top out at Class 12 = $15.00/hr on top of the $1.00
+   Base Class Rate the employer contributes. */
+const CAP_CEILING = 15;
 
 /* Real birthdates, month precision (matches the year.month convention used for
    Retirement Year and SS claim age) — this is what actually drives Social
