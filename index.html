@@ -767,12 +767,12 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <input id="bal" max="150000" min="0" step="any" type="range" value="41166"/>
 </div>
 <div class="f">
-<div class="f-top"><span class="f-l">Elective Rate Now</span><span class="f-v">$<input class="f-in" id="v-elec" inputmode="decimal" type="text"/>/hr</span></div>
-<input id="elec" max="15" min="0" step="any" type="range" value="5"/>
+<div class="f-top"><span class="f-l">Elective Rate Now</span><span class="f-v">$<input class="f-in" id="v-elec" inputmode="numeric" type="text"/>/hr</span></div>
+<input id="elec" max="15" min="0" step="1" type="range" value="5"/>
 </div>
 <div class="f">
-<div class="f-top"><span class="f-l">Step-Up Each July</span><span class="f-v">$<input class="f-in" id="v-step" inputmode="decimal" type="text"/>/hr</span></div>
-<input id="step" max="4" min="0" step="any" type="range" value="2"/>
+<div class="f-top"><span class="f-l">Step-Up Each July</span><span class="f-v">$<input class="f-in" id="v-step" inputmode="numeric" type="text"/>/hr</span></div>
+<input id="step" max="4" min="0" step="1" type="range" value="2"/>
 </div>
 <div class="f">
 <div class="f-top"><span class="f-l">Employer Contribution</span><span class="f-v" id="v-empr">$1.00/hr</span></div>
@@ -1535,7 +1535,7 @@ function drawTable(snap, retireAge){
 const FIELDS = {
   retire:{dec:2},
   rate:{dec:1}, wd:{dec:2}, hours:{dec:0},
-  bal:{dec:0, money:true}, elec:{dec:2, money:true}, step:{dec:2, money:true},
+  bal:{dec:0, money:true}, elec:{dec:0, money:true}, step:{dec:0, money:true},
   wm:{dec:0, money:true}, wstep:{dec:0, money:true}, rcap:{dec:0, money:true},
   sinc:{dec:0, money:true}, tax:{dec:1}, drag:{dec:1},
   pen:{dec:0, money:true}, surv:{dec:0}, ss67:{dec:0, money:true}, wss:{dec:0, money:true},
@@ -1700,6 +1700,9 @@ async function loadScenario(name){
     const r = await window.storage.get("scenario:" + name);
     if (!r) { say("That scenario is missing."); return; }
     S = Object.assign({}, DEFAULTS, JSON.parse(r.value));
+    // scenarios saved before the rates became whole-dollar can hold e.g. 5.5,
+    // which the box would round for display while the projection kept the cents
+    S.elec = Math.round(S.elec); S.step = Math.round(S.step);
     syncInputs(); update();
     say(`Loaded "${name}".`);
   } catch { say("Could not load that scenario."); }
