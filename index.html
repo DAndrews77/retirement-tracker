@@ -109,6 +109,19 @@ body{
 .f-v-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 .f-hint{font-size:10px;font-weight:500;color:var(--graphite-2);letter-spacing:0}
 .f-v{font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:600;color:var(--accent);display:inline-flex;align-items:baseline;gap:1px}
+/* the class actually elected each July, so the ladder's uneven upper rungs are
+   visible while dragging rather than having to be inferred from the total */
+.elecpath{
+  margin-top:7px;display:flex;flex-wrap:wrap;gap:4px 6px;
+  font-family:"IBM Plex Mono",monospace;font-size:10px;line-height:1.5;
+}
+.elecpath span{
+  display:inline-flex;gap:4px;padding:2px 6px;border-radius:999px;
+  border:1px solid var(--rule);color:var(--graphite-2);white-space:nowrap;
+}
+.elecpath span b{color:var(--accent);font-weight:600}
+.elecpath span.max{border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.elecpath .yr{opacity:.65;font-style:normal}
 .f-lock{
   display:inline-flex;align-items:center;justify-content:center;flex:none;
   width:17px;height:17px;margin-left:6px;padding:0;vertical-align:-3px;
@@ -777,6 +790,10 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <div class="f">
 <div class="f-top"><span class="f-l">Employer Contribution</span><span class="f-v" id="v-empr">$1.00/hr</span></div>
 </div>
+<div class="f">
+<div class="f-top"><span class="f-l">Election Path</span></div>
+<div class="elecpath" id="elec-path"></div>
+</div>
 </div>
 </section>
 <section class="grp" data-open="0">
@@ -1186,10 +1203,33 @@ function ssFactor(v, key){
 }
 
 /* ---------- render ---------- */
+/* Lists the class elected each July, showing only the years the election
+   actually moves. A step-up that lands between rungs holds the election where
+   it is, so the gaps here are the ladder, not a rounding artefact. */
+function renderElectionPath(retireYearInt){
+  const el = $("elec-path");
+  if (!el) return;
+  const stops = [];
+  let prev = null;
+  for (let y = BASE_YEAR; y <= retireYearInt; y++){
+    const rate = electableRate(Math.min(S.elec + S.step * (y - BASE_YEAR), CAP_CEILING));
+    if (rate === prev) continue;
+    const atMax = rate >= CAP_CEILING;
+    stops.push({ y, rate, atMax });
+    prev = rate;
+    if (atMax) break;                    // nothing moves once the plan max is elected
+  }
+  el.innerHTML = stops.map(s =>
+    `<span class="${s.atMax ? "max" : ""}"><i class="yr">${s.y}</i><b>$${s.rate}</b>${s.atMax ? " max" : ""}</span>`
+  ).join("");
+}
+
 function render(){
   const {snap, contribTotals, retireAge, retireMonth, retireYearInt} = project(S);
   const atRetire = snap[retireAge];
   if (!atRetire) return;
+
+  renderElectionPath(retireYearInt);
 
   $("m-year").textContent = retireYearInt;
   $("m-age").textContent  = retireAge;
