@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v30-whole-dollar-elective";
+const CACHE = "retirement-tracker-v31-class-ladder";
 const ASSETS = [
   "./",
   "./index.html",

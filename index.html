@@ -956,6 +956,19 @@ const SPOUSE_OFFSET = 2;       // rough whole-year gap, used only for the 50+ Ro
    Base Class Rate the employer contributes. */
 const CAP_CEILING = 15;
 
+/* Electable rates are rungs on the Commercial Journeymen classification ladder
+   (Class 0 through Class 12), not any dollar amount. An intended saving rate
+   that falls between rungs can only be elected down to the rung below it, so
+   the remainder joins the redirect and lands in the Roth/SEP/brokerage
+   waterfall - which is what happens in practice, since the form has no box for
+   the in-between amount. */
+const CLASS_RUNGS = [0, 0.5, 1, 2, 3, 4, 5, 7, 9, 11, 12, 14, 15];
+const electableRate = v => {
+  let rung = CLASS_RUNGS[0];
+  for (const r of CLASS_RUNGS) if (r <= v + 1e-9) rung = r;
+  return rung;
+};
+
 /* Real birthdates, month precision (matches the year.month convention used for
    Retirement Year and SS claim age) — this is what actually drives Social
    Security eligibility, since "yourAge + a rough offset" isn't precise enough
@@ -1090,8 +1103,9 @@ function project(s){
       for (const hf of halves){
         const hrs = (y === retireYearInt) ? H*partial : halfH;
         const u = uncapped(y, hf);
-        c401 += (Math.min(u, CAP_CEILING) + s.empr) * hrs;
-        redirect += Math.max(0, u - CAP_CEILING) * hrs;
+        const elect = electableRate(Math.min(u, CAP_CEILING));
+        c401 += (elect + s.empr) * hrs;
+        redirect += Math.max(0, u - elect) * hrs;
       }
     }
 
