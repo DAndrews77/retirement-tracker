@@ -806,19 +806,38 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 </div>
 </section>
 <section class="grp" data-open="0">
-<button class="grp-h" data-t=""><span class="grp-icon" style="--ic:#F59E0B"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" viewbox="0 0 16 16"><path d="M8 14V7"></path><path d="M8 7C8 3 5 2 3 2c0 3 1.5 5 5 5Z"></path><path d="M8 9c0-3.2 2.4-4.6 5-4.8.2 3-1.4 5.4-5 4.8Z"></path></svg></span>Roth IRAs<span class="grp-tri">▾</span></button>
+<button class="grp-h" data-t=""><span class="grp-icon" style="--ic:#C4E538"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" viewbox="0 0 16 16"><path d="M8 14V7"></path><path d="M8 7C8 3 5 2 3 2c0 3 1.5 5 5 5Z"></path><path d="M8 9c0-3.2 2.4-4.6 5-4.8.2 3-1.4 5.4-5 4.8Z"></path></svg></span>Your Roth IRA<span class="grp-tri">▾</span></button>
 <div class="grp-b">
 <div class="f">
-<div class="f-top"><span class="f-l">Spouse Start / Month</span><span class="f-v">$<input class="f-in" id="v-wm" inputmode="decimal" type="text"/></span></div>
+<div class="f-top"><span class="f-l">Current Balance</span><span class="f-v">$<input class="f-in" id="v-dbal" inputmode="decimal" type="text"/></span></div>
+<input id="dbal" max="100000" min="0" step="any" type="range" value="0"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">At Retirement</span><span class="f-v" id="v-drothend">$0</span></div>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Annual Roth Limit (Each)</span><span class="f-v">$<input class="f-in" id="v-rcap" inputmode="decimal" type="text"/></span></div>
+<input id="rcap" max="14000" min="6000" step="any" type="range" value="8000"/>
+</div>
+</div>
+</section>
+<section class="grp" data-open="0">
+<button class="grp-h" data-t=""><span class="grp-icon" style="--ic:#2DD4BF"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" viewbox="0 0 16 16"><path d="M8 14V7"></path><path d="M8 7C8 3 5 2 3 2c0 3 1.5 5 5 5Z"></path><path d="M8 9c0-3.2 2.4-4.6 5-4.8.2 3-1.4 5.4-5 4.8Z"></path></svg></span>Spouse Roth IRA<span class="grp-tri">▾</span></button>
+<div class="grp-b">
+<div class="f">
+<div class="f-top"><span class="f-l">Current Balance</span><span class="f-v">$<input class="f-in" id="v-wbal" inputmode="decimal" type="text"/></span></div>
+<input id="wbal" max="100000" min="0" step="any" type="range" value="500"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Contribution / Month</span><span class="f-v">$<input class="f-in" id="v-wm" inputmode="decimal" type="text"/></span></div>
 <input id="wm" max="700" min="0" step="any" type="range" value="150"/>
 </div>
 <div class="f">
-<div class="f-top"><span class="f-l">Spouse July Step-Up</span><span class="f-v">$<input class="f-in" id="v-wstep" inputmode="decimal" type="text"/></span></div>
+<div class="f-top"><span class="f-l">July Step-Up</span><span class="f-v">$<input class="f-in" id="v-wstep" inputmode="decimal" type="text"/></span></div>
 <input id="wstep" max="400" min="0" step="any" type="range" value="150"/>
 </div>
 <div class="f">
-<div class="f-top"><span class="f-l">Annual Roth Limit (50+)</span><span class="f-v">$<input class="f-in" id="v-rcap" inputmode="decimal" type="text"/></span></div>
-<input id="rcap" max="14000" min="6000" step="any" type="range" value="8000"/>
+<div class="f-top"><span class="f-l">At Retirement</span><span class="f-v" id="v-wrothend">$0</span></div>
 </div>
 </div>
 </section>
@@ -1021,7 +1040,7 @@ const ACCOUNTS = [
 const DEFAULTS = {
   retire:2042.04, rate:12, wd:4, hours:1959,
   bal:41166, elec:5, step:1, empr:1, xtra:2,
-  wm:150, wstep:150, rcap:8000,
+  wm:150, wstep:150, rcap:8000, dbal:0, wbal:500,
   sinc:100000, seppct:25, tax:33.3, drag:1.8,
   pen:5511, surv:0, ss67:3503, ssageYou:67.01, wss:1985, ssageSpouse:67.01
 };
@@ -1132,11 +1151,12 @@ function project(s){
       const steps = half === 2 ? (y - BASE_YEAR - 1) : (y - BASE_YEAR - 2);
       return s.wm + s.wstep * Math.max(0, steps + 1);
     };
-    if (y === BASE_YEAR) return 500 + 6 * s.wm;
+    // the account's opening money is s.wbal now, so the base year is pure contributions
+    if (y === BASE_YEAR) return 6 * s.wm;
     return rate(1)*6 + rate(2)*6;
   };
 
-  let b = {p401:s.bal, wroth:0, droth:0, sep:0, brok:0};
+  let b = {p401:s.bal, wroth:s.wbal, droth:s.dbal, sep:0, brok:0};
   const snap = {};
   const contribTotals = {p401:0, wroth:0, droth:0, sep:0, brok:0};
 
@@ -1657,6 +1677,7 @@ const FIELDS = {
   rate:{dec:1}, wd:{dec:2}, hours:{dec:0},
   bal:{dec:0, money:true}, elec:{dec:0, money:true}, step:{dec:0}, xtra:{dec:0, money:true},
   wm:{dec:0, money:true}, wstep:{dec:0, money:true}, rcap:{dec:0, money:true},
+  dbal:{dec:0, money:true}, wbal:{dec:0, money:true},
   sinc:{dec:0, money:true}, tax:{dec:1}, drag:{dec:1},
   pen:{dec:0, money:true}, surv:{dec:0}, ss67:{dec:0, money:true}, wss:{dec:0, money:true},
   ssageYou:{dec:2}, ssageSpouse:{dec:2}
@@ -1683,6 +1704,14 @@ function syncLabels(){
     if (box && box !== active) box.value = fmtBox(shownVal(key), FIELDS[key].dec, FIELDS[key].money);
   }
   $("v-sepcap").textContent = money(S.sinc * S.seppct/100);
+  /* each IRA reports its own projected balance beside its inputs, so the two
+     can be compared without reading them back off the chart */
+  const { snap: rothSnap, retireAge: rothAge } = project(S);
+  const rothEnd = rothSnap[rothAge];
+  if (rothEnd){
+    const d = $("v-drothend"); if (d) d.textContent = money(rothEnd.droth);
+    const w = $("v-wrothend"); if (w) w.textContent = money(rothEnd.wroth);
+  }
 
   // move each SS amount slider to match its new payout when the claim age changes;
   // the one actively being dragged is left alone so it can't fight the pointer
