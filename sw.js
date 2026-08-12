@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v33-class-stepping";
+const CACHE = "retirement-tracker-v34-log-sync";
 const ASSETS = [
   "./",
   "./index.html",
