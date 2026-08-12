@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v34-log-sync";
+const CACHE = "retirement-tracker-v35-ridge-labels";
 const ASSETS = [
   "./",
   "./index.html",

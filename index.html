@@ -1401,6 +1401,7 @@ function drawTerrain(snap, retireAge, atRetire){
 
   /* ---- ridges, back to front ---- */
   const peakLabels = [];   // collected now, positioned+drawn after the loop so they can't overlap
+  const ridgeLabels = [];  // account names, drawn last so no nearer ridge or crest can cover them
   const crestLines = [];   // crest paths, drawn in a pass after every ridge's occlusion body so a
                             // ridge that crosses above a nearer one stays visible, not hidden behind it
   for (let j=0; j<nL; j++){
@@ -1446,11 +1447,9 @@ function drawTerrain(snap, retireAge, atRetire){
     // three-pass crest (wide bloom, tight bloom, crisp hairline) - deferred, see crestLines below
     crestLines.push({ crest, fill: m.fill });
 
-    const tag = el("text", {x:(x0+3).toFixed(1), y:(base-4).toFixed(1),
-      "font-family":"IBM Plex Mono, monospace", "font-size":"7.5", "letter-spacing":"0.09em",
-      fill:m.fill, "fill-opacity":0.72});
-    tag.textContent = m.label.toUpperCase();
-    svg.appendChild(tag);
+    // deferred like the crests: drawn here it would be buried by the very next
+    // ridge's occlusion body, which is why 401(a) - the backmost - vanished
+    ridgeLabels.push({ x:(x0+3).toFixed(1), y:(base-4).toFixed(1), text:m.label.toUpperCase(), fill:m.fill });
 
     // peak value at the right end — keeps per-ridge normalisation honest.
     // Collected, not drawn yet: several ridges land close together here, so
@@ -1465,6 +1464,18 @@ function drawTerrain(snap, retireAge, atRetire){
     svg.appendChild(el("path", {d:crest, fill:"none", stroke:fill, "stroke-width":6, "stroke-opacity":0.16, filter:"url(#tGlowWide)"}));
     svg.appendChild(el("path", {d:crest, fill:"none", stroke:fill, "stroke-width":2.4, "stroke-opacity":0.42, filter:"url(#tGlow)"}));
     svg.appendChild(el("path", {d:crest, fill:"none", stroke:shade(fill,38), "stroke-width":1.1, "stroke-opacity":0.98}));
+  });
+
+  /* Account names go on top of everything, each carrying a halo of the page
+     colour so it stays legible where a crest line runs straight through it. */
+  ridgeLabels.forEach(({x, y, text, fill}) => {
+    const tag = el("text", {x, y,
+      "font-family":"IBM Plex Mono, monospace", "font-size":"7.5", "letter-spacing":"0.09em",
+      fill:shade(fill, 34), "fill-opacity":0.98,
+      stroke:page, "stroke-width":2.4, "stroke-opacity":0.8,
+      "paint-order":"stroke", "stroke-linejoin":"round"});
+    tag.textContent = text;
+    svg.appendChild(tag);
   });
 
   // de-overlap the collected peak labels, then draw each with a solid chip
