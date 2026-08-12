@@ -1447,9 +1447,25 @@ function drawTerrain(snap, retireAge, atRetire){
     // three-pass crest (wide bloom, tight bloom, crisp hairline) - deferred, see crestLines below
     crestLines.push({ crest, fill: m.fill });
 
-    // deferred like the crests: drawn here it would be buried by the very next
-    // ridge's occlusion body, which is why 401(a) - the backmost - vanished
-    ridgeLabels.push({ x:(x0+3).toFixed(1), y:(base-4).toFixed(1), text:m.label.toUpperCase(), fill:m.fill });
+    /* Deferred like the crests: drawn here it would be buried by the very next
+       ridge's occlusion body, which is why 401(a) - the backmost - vanished.
+       The crest climbs to the right underneath the text, so the label is lifted
+       clear of the highest point the line reaches across the label's own width
+       rather than sitting a fixed distance above the baseline. */
+    const labelText = m.label.toUpperCase();
+    const labelX = x0 + 3;
+    const labelW = labelText.length * 5.3;
+    let lineTop = base;
+    for (let k = 0; k <= 12; k++){
+      const t = Math.max(0, Math.min(1, (labelX + labelW*k/12 - x0) / w));
+      const y = base - (Math.max(0, sampleCR(vals, t*last))/maxVal)*ridgeH*sc;
+      if (y < lineTop) lineTop = y;
+    }
+    ridgeLabels.push({
+      x: labelX.toFixed(1),
+      y: Math.max(9, lineTop - 6).toFixed(1),   // 6px of air above the crest, never off the top
+      text: labelText, fill: m.fill,
+    });
 
     // peak value at the right end — keeps per-ridge normalisation honest.
     // Collected, not drawn yet: several ridges land close together here, so

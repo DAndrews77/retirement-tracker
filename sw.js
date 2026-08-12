@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v35-ridge-labels";
+const CACHE = "retirement-tracker-v36-label-clearance";
 const ASSETS = [
   "./",
   "./index.html",
