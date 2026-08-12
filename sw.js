@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v39-roth-contribs";
+const CACHE = "retirement-tracker-v40-prorate-base-year";
 const ASSETS = [
   "./",
   "./index.html",
