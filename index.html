@@ -214,6 +214,15 @@ input[type=range]:focus-visible{outline:2px solid var(--dim);outline-offset:3px}
 .pace-body{min-width:200px;flex:1}
 .pace-k{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite-2)}
 .pace-note{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--graphite-2);margin-top:5px;line-height:1.5}
+.pace-apply{margin-top:9px}
+.pace-apply button{
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.04em;
+  color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);
+  border-radius:999px;padding:7px 13px;min-height:34px;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;transition:background .12s,border-color .12s;
+}
+.pace-apply button:hover,.pace-apply button:focus-visible{background:color-mix(in srgb,var(--accent) 22%,transparent);border-color:var(--accent);outline:none}
 
 /* signature: dimension string */
 .dimwrap{padding:16px 18px 6px;background:var(--panel);
@@ -775,8 +784,8 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <input id="retire" max="186" min="0" step="any" type="range" value="69"/>
 </div>
 <div class="f">
-<div class="f-top"><span class="f-l">Annual Return</span><span class="f-v"><input class="f-in" id="v-rate" max="15" min="4" step="0.1" type="number"/>%</span></div>
-<input id="rate" max="15" min="4" step="any" type="range" value="12"/>
+<div class="f-top"><span class="f-l">Annual Return</span><span class="f-v"><input class="f-in" id="v-rate" max="20" min="4" step="0.1" type="number"/>%</span></div>
+<input id="rate" max="20" min="4" step="any" type="range" value="12"/>
 </div>
 <div class="f">
 <div class="f-top"><span class="f-l">Withdrawal Rate</span><span class="f-v"><input class="f-in" id="v-wd" max="7" min="2" step="0.01" type="number"/>%</span></div>
@@ -951,6 +960,7 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <div class="pace-body">
 <div class="pace-k" id="pace-k">Pace Check — Current Balance Vs Goal</div>
 <div class="pace-note" id="pace-note">Log at least two years of Current Balance to see your pace.</div>
+<div class="pace-apply" id="pace-apply" hidden></div>
 </div>
 </div>
 <div class="dimwrap" id="projections">
@@ -1047,6 +1057,36 @@ const classIndexOf = v => {
   CLASS_RUNGS.forEach((r, k) => { if (r <= v + 1e-9) i = k; });
   return i;
 };
+
+/* The class elected in a given half-year. Shared so the projection and the
+   pace check cannot drift apart on what was being contributed when. */
+function electedRateAt(s, y, half){
+  const start = classIndexOf(s.elec);
+  if (y === BASE_YEAR && half === 1) return CLASS_RUNGS[Math.max(0, start - s.step)];
+  const julys = half === 2 ? (y - BASE_YEAR) : (y - 1 - BASE_YEAR);
+  return CLASS_RUNGS[Math.min(MAX_CLASS, start + s.step * Math.max(0, julys))];
+}
+
+/* Money paid into the 401(a) between two dates, walking month by month so a
+   July step-up lands in the right place. Needed because a balance that moved
+   from one reading to the next moved partly because money was added to it, and
+   calling that "return" overstates it badly over a short window. */
+function contributedBetween(iso1, iso2){
+  const a = new Date(iso1 + "T00:00:00"), b = new Date(iso2 + "T00:00:00");
+  if (isNaN(a.getTime()) || isNaN(b.getTime()) || !(b > a)) return 0;
+  const perMonthHours = S.hours / 12;
+  let total = 0, cur = new Date(a.getFullYear(), a.getMonth(), 1);
+  while (cur < b){
+    const y = cur.getFullYear(), m = cur.getMonth();
+    const mStart = new Date(y, m, 1), mEnd = new Date(y, m + 1, 1);
+    const from = Math.max(mStart.getTime(), a.getTime());
+    const to   = Math.min(mEnd.getTime(),  b.getTime());
+    const frac = Math.max(0, (to - from) / (mEnd - mStart));
+    if (frac > 0) total += (electedRateAt(S, y, m < 6 ? 1 : 2) + S.empr) * perMonthHours * frac;
+    cur = mEnd;
+  }
+  return total;
+}
 
 /* Real birthdates, month precision (matches the year.month convention used for
    Retirement Year and SS claim age) — this is what actually drives Social
@@ -1175,12 +1215,7 @@ function project(s){
      and stops at Class 12. Stepping by classes rather than dollars is what
      makes it move every July: the rungs are unevenly spaced, so a fixed dollar
      increase would stall in the years its target falls between them. */
-  const startClass = classIndexOf(s.elec);
-  const electedAt = (y, half) => {
-    if (y === BASE_YEAR && half === 1) return CLASS_RUNGS[Math.max(0, startClass - s.step)];
-    const julys = half === 2 ? (y - BASE_YEAR) : (y - 1 - BASE_YEAR);
-    return CLASS_RUNGS[Math.min(MAX_CLASS, startClass + s.step * Math.max(0, julys))];
-  };
+  const electedAt = (y, half) => electedRateAt(s, y, half);
 
   /* Once the plan is maxed there is nowhere left to climb, so continued saving
      has to go somewhere else. s.xtra is how much more per hour gets put aside
@@ -2193,6 +2228,7 @@ function drawGauge(status, delta){
 /* ---------- live pace check: Current Balance vs the Annual Return goal ---------- */
 function paceRender(){
   const v = $("pace-v"), note = $("pace-note"), k = $("pace-k");
+  const apply = $("pace-apply");
   if (!v || !LOG) return;
   const goal = S.rate;
   k.textContent = `Pace Check — Current Balance Vs ${goal.toFixed(1)}% Goal`;
@@ -2204,20 +2240,35 @@ function paceRender(){
     note.textContent = dates.length === 1
       ? `Logged ${dates[0]} only — add one more entry of Current Balance to see your pace.`
       : "Log at least two entries of Current Balance (any dates) to see your pace.";
+    if (apply) apply.hidden = true;
     return;
   }
 
-  const d1 = dates[dates.length - 2], d2 = dates[dates.length - 1];
+  // widest window available - a longer span is a far steadier read than the last two entries
+  const d1 = dates[0], d2 = dates[dates.length - 1];
   const b1 = LOG.bal[d1], b2 = LOG.bal[d2];
   const yrs = (new Date(d2) - new Date(d1)) / MS_PER_YEAR;
   if (!(b1 > 0) || yrs <= 0){
     v.textContent = "NO DATA"; v.className = "pace-v flat";
     drawGauge("none", 0);
     note.textContent = "Need a positive starting balance and two different dates to compute growth.";
+    if (apply) apply.hidden = true;
     return;
   }
 
-  const realized = (Math.pow(b2 / b1, 1/yrs) - 1) * 100;
+  /* Only the part not explained by deposits is return. Without this the figure
+     counts every contributed dollar as growth, which over a short window reads
+     as a wildly high rate. */
+  const paidIn = contributedBetween(d1, d2);
+  const fromGrowth = b2 - paidIn;
+  if (!(fromGrowth > 0)){
+    v.textContent = "NO DATA"; v.className = "pace-v flat";
+    drawGauge("none", 0);
+    note.textContent = `${money(b1)} to ${money(b2)} over ${yrs.toFixed(2)} yrs is less than the ${money(paidIn)} contributed, so there is no growth to measure yet.`;
+    if (apply) apply.hidden = true;
+    return;
+  }
+  const realized = (Math.pow(fromGrowth / b1, 1/yrs) - 1) * 100;
   const delta = realized - goal;
   const status = delta >= 0.3 ? "AHEAD" : (delta <= -0.3 ? "BEHIND" : "ON PACE");
   v.textContent = status;
@@ -2225,8 +2276,26 @@ function paceRender(){
   drawGauge("data", delta);
   const span = yrs < 1 ? `${Math.round(yrs*365)} days` : `${yrs.toFixed(2)} yrs`;
   note.textContent =
-    `${(delta>=0?"+":"−")}${Math.abs(delta).toFixed(1)} pts vs goal · ${d1} → ${d2} (${span}): ${money(b1)} to ${money(b2)}, realized ${realized.toFixed(1)}%/yr vs ${goal.toFixed(1)}% goal.` +
-    (yrs < 30/365.25 ? " Short window — annualized figure will be noisy." : "");
+    `${(delta>=0?"+":"−")}${Math.abs(delta).toFixed(1)} pts vs goal · ${d1} → ${d2} (${span}): ${money(b1)} to ${money(b2)}, of which ${money(paidIn)} contributed — return ${realized.toFixed(1)}%/yr vs ${goal.toFixed(1)}% goal.` +
+    (yrs < 1 ? " Short window — one year or more makes this meaningful." : "");
+
+  /* Offer the measured return as the projection's growth rate. It stays an
+     offer rather than an automatic swap: a few months of data is noise, and
+     the rate drives every account, not just the one being measured. */
+  if (!apply) return;
+  const rateRng = $("rate");
+  const lo = rateRng ? +rateRng.min : 0, hi = rateRng ? +rateRng.max : 100;
+  const target = rnd(Math.min(hi, Math.max(lo, realized)), 1);
+  if (yrs < 60/365.25 || Math.abs(target - goal) < 0.1){ apply.hidden = true; return; }
+  apply.hidden = false;
+  // the span rides on the button itself, so a rate drawn from a few weeks cannot look authoritative
+  const clamped = Math.abs(target - realized) > 0.05 ? `, capped at ${hi}%` : "";
+  apply.innerHTML = `<button type="button" id="pace-apply-btn">Use ${target.toFixed(1)}% as my return (${span} of data${clamped})</button>`;
+  $("pace-apply-btn").addEventListener("click", () => {
+    if (LOCKED.has("rate")) return;
+    S.rate = target;
+    syncInputs(); update();
+  });
 }
 
 function fieldLogBuild(){
