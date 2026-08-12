@@ -814,6 +814,9 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <div class="f-top"><span class="f-l">Election Path</span></div>
 <div class="elecpath" id="elec-path"></div>
 </div>
+<div class="f">
+<div class="f-top"><span class="f-l">At Retirement</span><span class="f-v" id="v-p401end">$0</span></div>
+</div>
 </div>
 </section>
 <section class="grp" data-open="0">
@@ -871,6 +874,9 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <div class="f-top"><span class="f-l">SEP Ceiling (25% Of Income)</span><span class="f-v" id="v-sepcap">$25,000</span></div>
 <input id="seppct" max="25" min="0" step="any" type="range" value="25"/>
 </div>
+<div class="f">
+<div class="f-top"><span class="f-l">At Retirement</span><span class="f-v" id="v-sepend">$0</span></div>
+</div>
 </div>
 </section>
 <section class="grp" data-open="0">
@@ -883,6 +889,9 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <div class="f">
 <div class="f-top"><span class="f-l">Brokerage Tax Drag</span><span class="f-v"><input class="f-in" id="v-drag" max="3" min="0" step="0.1" type="number"/>%</span></div>
 <input id="drag" max="3" min="0" step="any" type="range" value="1.8"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">At Retirement</span><span class="f-v" id="v-brokend">$0</span></div>
 </div>
 </div>
 </section>
@@ -1350,6 +1359,22 @@ function render(){
 
   renderElectionPath(retireYearInt);
 
+  /* Each account reports its own projected balance beside its own inputs. An
+     account with nothing in it yet is labelled Estimated, since its figure
+     rests entirely on assumptions rather than on any money that exists. */
+  const acctEnd = (id, value, opened) => {
+    const el = $(id);
+    if (!el) return;
+    el.textContent = money(value);
+    const label = el.closest(".f")?.querySelector(".f-l");
+    if (label) label.textContent = opened ? "At Retirement" : "At Retirement (Estimated)";
+  };
+  acctEnd("v-p401end",  atRetire.p401,  S.bal  > 0);
+  acctEnd("v-drothend", atRetire.droth, S.dbal > 0);
+  acctEnd("v-wrothend", atRetire.wroth, S.wbal > 0);
+  acctEnd("v-sepend",   atRetire.sep,   false);   // no money in either yet
+  acctEnd("v-brokend",  atRetire.brok,  false);
+
   $("m-year").textContent = retireYearInt;
   $("m-age").textContent  = retireAge;
   $("m-ret").textContent  = S.rate.toFixed(1) + "%";
@@ -1765,14 +1790,6 @@ function syncLabels(){
     if (box && box !== active) box.value = fmtBox(shownVal(key), FIELDS[key].dec, FIELDS[key].money);
   }
   $("v-sepcap").textContent = money(S.sinc * S.seppct/100);
-  /* each IRA reports its own projected balance beside its inputs, so the two
-     can be compared without reading them back off the chart */
-  const { snap: rothSnap, retireAge: rothAge } = project(S);
-  const rothEnd = rothSnap[rothAge];
-  if (rothEnd){
-    const d = $("v-drothend"); if (d) d.textContent = money(rothEnd.droth);
-    const w = $("v-wrothend"); if (w) w.textContent = money(rothEnd.wroth);
-  }
 
   // move each SS amount slider to match its new payout when the claim age changes;
   // the one actively being dragged is left alone so it can't fight the pointer
