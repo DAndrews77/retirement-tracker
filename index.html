@@ -1071,21 +1071,44 @@ function electedRateAt(s, y, half){
    July step-up lands in the right place. Needed because a balance that moved
    from one reading to the next moved partly because money was added to it, and
    calling that "return" overstates it badly over a short window. */
+/* The rate actually on record for a date, if the elective rate has been logged.
+   Falling back to the schedule means assuming a step-up happened last July,
+   which is a guess - and on a short window that guess moves the measured return
+   by more than the arithmetic does. */
+function loggedElectiveOn(t){
+  const dates = (LOG && LOG.elec) ? Object.keys(LOG.elec).sort() : [];
+  let rate = null;
+  for (const d of dates){
+    if (new Date(d + "T00:00:00").getTime() <= t) rate = LOG.elec[d]; else break;
+  }
+  return (typeof rate === "number" && !isNaN(rate)) ? rate : null;
+}
+
 function contributedBetween(iso1, iso2){
   const a = new Date(iso1 + "T00:00:00"), b = new Date(iso2 + "T00:00:00");
-  if (isNaN(a.getTime()) || isNaN(b.getTime()) || !(b > a)) return 0;
-  const perMonthHours = S.hours / 12;
-  let total = 0, cur = new Date(a.getFullYear(), a.getMonth(), 1);
+  const empty = { total: 0, weighted: 0, assumed: false };
+  if (isNaN(a.getTime()) || isNaN(b.getTime()) || !(b > a)) return empty;
+  const span = b - a, perMonthHours = S.hours / 12;
+  let total = 0, weighted = 0, assumed = false;
+  let cur = new Date(a.getFullYear(), a.getMonth(), 1);
   while (cur < b){
     const y = cur.getFullYear(), m = cur.getMonth();
     const mStart = new Date(y, m, 1), mEnd = new Date(y, m + 1, 1);
     const from = Math.max(mStart.getTime(), a.getTime());
-    const to   = Math.min(mEnd.getTime(),  b.getTime());
+    const to   = Math.min(mEnd.getTime(), b.getTime());
     const frac = Math.max(0, (to - from) / (mEnd - mStart));
-    if (frac > 0) total += (electedRateAt(S, y, m < 6 ? 1 : 2) + S.empr) * perMonthHours * frac;
+    if (frac > 0){
+      const logged = loggedElectiveOn((from + to) / 2);
+      if (logged === null) assumed = true;
+      const rate = (logged === null ? electedRateAt(S, y, m < 6 ? 1 : 2) : logged) + S.empr;
+      const amount = rate * perMonthHours * frac;
+      total += amount;
+      // money paid in mid-window was only invested for the rest of it
+      weighted += amount * ((b - (from + to) / 2) / span);
+    }
     cur = mEnd;
   }
-  return total;
+  return { total, weighted, assumed };
 }
 
 /* Real birthdates, month precision (matches the year.month convention used for
@@ -2259,16 +2282,21 @@ function paceRender(){
   /* Only the part not explained by deposits is return. Without this the figure
      counts every contributed dollar as growth, which over a short window reads
      as a wildly high rate. */
-  const paidIn = contributedBetween(d1, d2);
-  const fromGrowth = b2 - paidIn;
-  if (!(fromGrowth > 0)){
+  const { total: paidIn, weighted, assumed } = contributedBetween(d1, d2);
+  /* Modified Dietz: the money at work is the opening balance plus each
+     contribution for the share of the window it was actually invested. Charging
+     the whole contribution against the closing balance instead would credit the
+     opening balance with gains the new money earned. */
+  const invested = b1 + weighted;
+  const gain = b2 - b1 - paidIn;
+  if (!(invested > 0) || 1 + gain/invested <= 0){
     v.textContent = "NO DATA"; v.className = "pace-v flat";
     drawGauge("none", 0);
-    note.textContent = `${money(b1)} to ${money(b2)} over ${yrs.toFixed(2)} yrs is less than the ${money(paidIn)} contributed, so there is no growth to measure yet.`;
+    note.textContent = `${money(b1)} to ${money(b2)} over ${yrs.toFixed(2)} yrs against ${money(paidIn)} contributed — not enough to measure a return yet.`;
     if (apply) apply.hidden = true;
     return;
   }
-  const realized = (Math.pow(fromGrowth / b1, 1/yrs) - 1) * 100;
+  const realized = (Math.pow(1 + gain/invested, 1/yrs) - 1) * 100;
   const delta = realized - goal;
   const status = delta >= 0.3 ? "AHEAD" : (delta <= -0.3 ? "BEHIND" : "ON PACE");
   v.textContent = status;
@@ -2277,6 +2305,7 @@ function paceRender(){
   const span = yrs < 1 ? `${Math.round(yrs*365)} days` : `${yrs.toFixed(2)} yrs`;
   note.textContent =
     `${(delta>=0?"+":"−")}${Math.abs(delta).toFixed(1)} pts vs goal · ${d1} → ${d2} (${span}): ${money(b1)} to ${money(b2)}, of which ${money(paidIn)} contributed — return ${realized.toFixed(1)}%/yr vs ${goal.toFixed(1)}% goal.` +
+    (assumed ? " Contributions are estimated from the assumed step-up schedule; log Elective Rate Now to measure them instead." : "") +
     (yrs < 1 ? " Short window — one year or more makes this meaningful." : "");
 
   /* Offer the measured return as the projection's growth rate. It stays an
