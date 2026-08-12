@@ -1259,8 +1259,8 @@ function renderElectionPath(retireYearInt){
 
   const setHint = (id, text) => { const h = $(id); if (h) h.textContent = text; };
   setHint("elec-class", `Class ${start}`);
-  setHint("step-hint", maxYear ? `maxes ${maxYear}` : "never maxes");
-  setHint("xtra-hint", maxYear && S.xtra ? `from ${maxYear + 1}` : "—");
+  setHint("step-hint", maxYear ? `Maxes ${maxYear}` : "Never maxes");
+  setHint("xtra-hint", maxYear && S.xtra ? `From ${maxYear + 1}` : "—");
 }
 
 function render(){
@@ -1925,7 +1925,7 @@ function fieldLogRenderPanel(key){
     inp.addEventListener("input", () => {
       const v = parseFloat(inp.value.replace(/,/g, ""));
       if (!isNaN(v)){ LOG[key][inp.dataset.date] = rnd(v, dec); fieldLogPersist(); renderActivityLog(); }
-      if (key === "bal") syncBalFromLatestLog(); else paceRender();
+      syncFromLogs();
     });
   });
   panel.querySelectorAll(".f-logdel").forEach(btn => {
@@ -1934,7 +1934,7 @@ function fieldLogRenderPanel(key){
       fieldLogPersist();
       fieldLogRenderPanel(key);
       renderActivityLog();
-      if (key === "bal") syncBalFromLatestLog(); else paceRender();
+      syncFromLogs();
     });
   });
   panel.querySelector(".f-logaddbtn").addEventListener("click", () => {
@@ -1944,7 +1944,7 @@ function fieldLogRenderPanel(key){
     fieldLogPersist();
     fieldLogRenderPanel(key);
     renderActivityLog();
-    if (key === "bal") syncBalFromLatestLog(); else paceRender();
+    syncFromLogs();
   });
 }
 
@@ -1981,15 +1981,29 @@ function renderActivityLog(){
 
 /* Current Balance is special: logging it is meant to double as "update my real
    balance," so the live field always mirrors whichever logged date is latest. */
-function syncBalFromLatestLog(){
-  const dates = fieldLogDates("bal");
-  if (!dates.length) { paceRender(); return; }
-  const latest = dates[dates.length - 1];
-  const v = LOG.bal[latest];
-  if (typeof v !== "number" || isNaN(v)) { paceRender(); return; }
-  S.bal = v;
-  const rng = $("bal");
-  if (rng) rng.value = v;
+/* A log records what a field actually did over time, so its newest entry is
+   that field's value today. Every logged field adopts it, not just Current
+   Balance - otherwise a figure entered in the log sat there while the field
+   above it, and the projection, carried on with the old number.
+   Rows hold the displayed value, so SS amounts convert back through the claim
+   age, and the elective rate settles on a real class. */
+function syncFieldFromLatestLog(key){
+  const dates = fieldLogDates(key);
+  if (!dates.length) return false;
+  const v = LOG[key][dates[dates.length - 1]];
+  if (typeof v !== "number" || isNaN(v)) return false;
+
+  let next = storedVal(key, v);
+  if (key === "elec") next = electableRate(Math.min(CAP_CEILING, Math.max(0, next)));
+  if (key === "step") next = Math.max(0, Math.min(3, Math.round(next)));
+  if (S[key] === next) return false;
+  S[key] = next;
+  return true;
+}
+
+function syncFromLogs(){
+  LOGGABLE.forEach(syncFieldFromLatestLog);
+  syncInputs();
   update();   // update() already calls paceRender() too
 }
 
@@ -2129,7 +2143,7 @@ async function fieldLogInit(){
   /* Adopt the newest logged balance on startup, not just when a log row is
      edited. Without this the projection opened against a stale Current Balance
      while the log sitting right above it already showed a newer figure. */
-  syncBalFromLatestLog();
+  syncFromLogs();
   renderActivityLog();
 }
 
