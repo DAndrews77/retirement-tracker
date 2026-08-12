@@ -1130,6 +1130,28 @@ function project(s){
   const sepCeiling = s.sinc * (s.seppct/100);
   const taxKeep = 1 - s.tax/100;
 
+  /* A balance is a reading taken on a date, and it already contains every
+     contribution and every gain up to that date. Treating it as a start-of-year
+     figure and then crediting a whole year on top counted those twice. Each
+     account is instead measured from its own newest log date - or today, if it
+     has never been logged - and only the rest of that year is credited to it. */
+  const elapsedOfBaseYear = key => {
+    const dates = (LOG && LOG[key]) ? Object.keys(LOG[key]).sort() : [];
+    const iso = dates.length ? dates[dates.length - 1] : todayISO();
+    const d = new Date(iso + "T00:00:00");
+    if (isNaN(d.getTime())) return 0;
+    if (d.getFullYear() < BASE_YEAR) return 0;   // reading predates the model
+    if (d.getFullYear() > BASE_YEAR) return 1;   // whole base year already banked
+    return Math.max(0, Math.min(1, (d.getMonth() + d.getDate()/31) / 12));
+  };
+  const elapsed = { p401:elapsedOfBaseYear("bal"), wroth:elapsedOfBaseYear("wbal"), droth:elapsedOfBaseYear("dbal") };
+  const leftOfBaseYear = k => 1 - elapsed[k];
+  // how much of one half-year still lies ahead of a reading taken `e` into the year
+  const halfLeft = (half, e) => {
+    const from = half === 1 ? 0 : 0.5, to = from + 0.5;
+    return Math.max(0, Math.min(to, 1) - Math.max(from, e)) / 0.5;
+  };
+
   /* The election climbs the classification ladder by s.step CLASSES each July
      and stops at Class 12. Stepping by classes rather than dollars is what
      makes it move every July: the rungs are unevenly spaced, so a fixed dollar
@@ -1160,8 +1182,8 @@ function project(s){
       const steps = half === 2 ? (y - BASE_YEAR - 1) : (y - BASE_YEAR - 2);
       return s.wm + s.wstep * Math.max(0, steps + 1);
     };
-    // the account's opening money is s.wbal now, so the base year is pure contributions
-    if (y === BASE_YEAR) return 6 * s.wm;
+    // only the part of the base year after her balance reading is still to come
+    if (y === BASE_YEAR) return leftOfBaseYear("wroth") * 12 * s.wm;
     return rate(1)*6 + rate(2)*6;
   };
 
@@ -1173,7 +1195,7 @@ function project(s){
       const steps = half === 2 ? (y - BASE_YEAR - 1) : (y - BASE_YEAR - 2);
       return s.dm + s.dstep * Math.max(0, steps + 1);
     };
-    if (y === BASE_YEAR) return 6 * s.dm;
+    if (y === BASE_YEAR) return leftOfBaseYear("droth") * 12 * s.dm;
     return rate(1)*6 + rate(2)*6;
   };
 
@@ -1191,7 +1213,9 @@ function project(s){
     if (working){
       const halves = (y === retireYearInt) ? [1] : [1,2];
       for (const hf of halves){
-        const hrs = (y === retireYearInt) ? H*partial : halfH;
+        let hrs = (y === retireYearInt) ? H*partial : halfH;
+        // hours already worked before the balance reading are inside that balance
+        if (y === BASE_YEAR) hrs *= halfLeft(hf, elapsed.p401);
         const elect = electedAt(y, hf);
         c401 += (elect + s.empr) * hrs;
         redirect += extraAt(y, hf) * hrs;
@@ -1209,14 +1233,17 @@ function project(s){
     const sepC  = Math.min(overflow, sepCeiling * partial);
     const brokC = Math.max(0, overflow - sepC) * taxKeep;
 
-    const grow = (bal, add, rr) => {
+    /* gf is the share of the base year an account still has left to run: a
+       balance read in August only compounds from August, not from January. */
+    const grow = (bal, add, rr, gf) => {
       if (y === retireYearInt) return bal * (1 + rr*partial) + add;
-      return bal * (1 + rr) + add * (1 + rr/2);
+      const f = (y === BASE_YEAR && gf !== undefined) ? gf : 1;
+      return bal * (1 + rr*f) + add * (1 + rr*f/2);
     };
     b = {
-      p401 : grow(b.p401,  c401, r),
-      wroth: grow(b.wroth, wC,   r),
-      droth: grow(b.droth, dC,   r),
+      p401 : grow(b.p401,  c401, r,     leftOfBaseYear("p401")),
+      wroth: grow(b.wroth, wC,   r,     leftOfBaseYear("wroth")),
+      droth: grow(b.droth, dC,   r,     leftOfBaseYear("droth")),
       sep  : grow(b.sep,   sepC, r),
       brok : grow(b.brok,  brokC, rBrok)
     };
