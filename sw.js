@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v37-log-sync-all";
+const CACHE = "retirement-tracker-v38-split-iras";
 const ASSETS = [
   "./",
   "./index.html",
