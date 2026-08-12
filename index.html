@@ -784,7 +784,7 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <input id="retire" max="186" min="0" step="any" type="range" value="69"/>
 </div>
 <div class="f">
-<div class="f-top"><span class="f-l">Annual Return</span><span class="f-v"><input class="f-in" id="v-rate" max="20" min="4" step="0.1" type="number"/>%</span></div>
+<div class="f-top"><span class="f-l">Annual Return (All Accounts)</span><span class="f-v"><input class="f-in" id="v-rate" max="20" min="4" step="0.1" type="number"/>%</span></div>
 <input id="rate" max="20" min="4" step="any" type="range" value="12"/>
 </div>
 <div class="f">
@@ -824,6 +824,10 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <div class="elecpath" id="elec-path"></div>
 </div>
 <div class="f">
+<div class="f-top"><span class="f-l">Annual Return</span><span class="f-v"><input class="f-in" id="v-r401" max="20" min="4" step="0.1" type="number"/>%</span></div>
+<input id="r401" max="20" min="4" step="0.1" type="range" value="12"/>
+</div>
+<div class="f">
 <div class="f-top"><span class="f-l">At Retirement</span><span class="f-v" id="v-p401end">$0</span></div>
 </div>
 </div>
@@ -842,6 +846,10 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <div class="f">
 <div class="f-top"><span class="f-l">July Step-Up</span><span class="f-v">$<input class="f-in" id="v-dstep" inputmode="decimal" type="text"/></span></div>
 <input id="dstep" max="400" min="0" step="any" type="range" value="0"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Annual Return</span><span class="f-v"><input class="f-in" id="v-rdroth" max="20" min="4" step="0.1" type="number"/>%</span></div>
+<input id="rdroth" max="20" min="4" step="0.1" type="range" value="12"/>
 </div>
 <div class="f">
 <div class="f-top"><span class="f-l">At Retirement</span><span class="f-v" id="v-drothend">$0</span></div>
@@ -868,6 +876,10 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <input id="wstep" max="400" min="0" step="any" type="range" value="150"/>
 </div>
 <div class="f">
+<div class="f-top"><span class="f-l">Annual Return</span><span class="f-v"><input class="f-in" id="v-rwroth" max="20" min="4" step="0.1" type="number"/>%</span></div>
+<input id="rwroth" max="20" min="4" step="0.1" type="range" value="12"/>
+</div>
+<div class="f">
 <div class="f-top"><span class="f-l">At Retirement</span><span class="f-v" id="v-wrothend">$0</span></div>
 </div>
 </div>
@@ -884,6 +896,10 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <input id="seppct" max="25" min="0" step="any" type="range" value="25"/>
 </div>
 <div class="f">
+<div class="f-top"><span class="f-l">Annual Return</span><span class="f-v"><input class="f-in" id="v-rsep" max="20" min="4" step="0.1" type="number"/>%</span></div>
+<input id="rsep" max="20" min="4" step="0.1" type="range" value="12"/>
+</div>
+<div class="f">
 <div class="f-top"><span class="f-l">At Retirement</span><span class="f-v" id="v-sepend">$0</span></div>
 </div>
 </div>
@@ -898,6 +914,10 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <div class="f">
 <div class="f-top"><span class="f-l">Brokerage Tax Drag</span><span class="f-v"><input class="f-in" id="v-drag" max="3" min="0" step="0.1" type="number"/>%</span></div>
 <input id="drag" max="3" min="0" step="any" type="range" value="1.8"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Annual Return</span><span class="f-v"><input class="f-in" id="v-rbrok" max="20" min="4" step="0.1" type="number"/>%</span></div>
+<input id="rbrok" max="20" min="4" step="0.1" type="range" value="12"/>
 </div>
 <div class="f">
 <div class="f-top"><span class="f-l">At Retirement</span><span class="f-v" id="v-brokend">$0</span></div>
@@ -1052,6 +1072,12 @@ const electableRate = v => {
   for (const r of CLASS_RUNGS) if (r <= v + 1e-9) rung = r;
   return rung;
 };
+/* Per-account return rates. Annual Return in Timing & Markets stays the master:
+   an account follows it until its own rate is set to something different, and
+   from then on that account keeps its own figure. */
+const ACCT_RATES = { p401:"r401", wroth:"rwroth", droth:"rdroth", sep:"rsep", brok:"rbrok" };
+const ACCT_RATE_KEYS = Object.values(ACCT_RATES);
+
 const classIndexOf = v => {
   let i = 0;
   CLASS_RUNGS.forEach((r, k) => { if (r <= v + 1e-9) i = k; });
@@ -1133,6 +1159,7 @@ const DEFAULTS = {
   bal:41166, elec:5, step:1, empr:1, xtra:2,
   wm:150, wstep:150, rcap:8000, dbal:0, wbal:500, dm:0, dstep:0,
   sinc:100000, seppct:25, tax:33.3, drag:1.8,
+  r401:12, rwroth:12, rdroth:12, rsep:12, rbrok:12,
   pen:5511, surv:0, ss67:3503, ssageYou:67.01, wss:1985, ssageSpouse:67.01
 };
 
@@ -1207,8 +1234,11 @@ function project(s){
   const { year: retireYearInt, month: retireMonth } = decodeRetireYM(s.retire);
   const retirePartial = retireMonth / 12;
   const endYear = BASE_YEAR + (75 - AGE_AT_BASE);
-  const r = s.rate/100;
-  const rBrok = Math.max(0, r - s.drag/100);
+  /* Each account compounds at its own return. They are different investments,
+     and a rate measured from one of them says nothing about the others. */
+  const rOf = k => (typeof s[ACCT_RATES[k]] === "number" ? s[ACCT_RATES[k]] : s.rate) / 100;
+  const rP401 = rOf("p401"), rWroth = rOf("wroth"), rDroth = rOf("droth"), rSep = rOf("sep");
+  const rBrok = Math.max(0, rOf("brok") - s.drag/100);
   const sepCeiling = s.sinc * (s.seppct/100);
   const taxKeep = 1 - s.tax/100;
 
@@ -1318,10 +1348,10 @@ function project(s){
       return bal * (1 + rr*f) + add * (1 + rr*f/2);
     };
     b = {
-      p401 : grow(b.p401,  c401, r,     leftOfBaseYear("p401")),
-      wroth: grow(b.wroth, wC,   r,     leftOfBaseYear("wroth")),
-      droth: grow(b.droth, dC,   r,     leftOfBaseYear("droth")),
-      sep  : grow(b.sep,   sepC, r),
+      p401 : grow(b.p401,  c401, rP401,  leftOfBaseYear("p401")),
+      wroth: grow(b.wroth, wC,   rWroth, leftOfBaseYear("wroth")),
+      droth: grow(b.droth, dC,   rDroth, leftOfBaseYear("droth")),
+      sep  : grow(b.sep,   sepC, rSep),
       brok : grow(b.brok,  brokC, rBrok)
     };
     contribTotals.p401 += c401; contribTotals.wroth += wC;
@@ -1825,6 +1855,7 @@ function drawTable(snap, retireAge, ageShownIn){
 const FIELDS = {
   retire:{dec:2},
   rate:{dec:1}, wd:{dec:2}, hours:{dec:0},
+  r401:{dec:1}, rwroth:{dec:1}, rdroth:{dec:1}, rsep:{dec:1}, rbrok:{dec:1},
   bal:{dec:0, money:true}, elec:{dec:0, money:true}, step:{dec:0}, xtra:{dec:0, money:true},
   wm:{dec:0, money:true}, wstep:{dec:0, money:true}, rcap:{dec:0, money:true},
   dbal:{dec:0, money:true}, wbal:{dec:0, money:true},
@@ -1900,13 +1931,23 @@ async function stateLoad(){
   } catch {}
 }
 
+/* Accounts still tracking the overall rate move with it; one that has been set
+   to something different keeps its own figure from then on. */
+function assignRate(key, value){
+  if (key !== "rate"){ S[key] = value; return; }
+  const prev = S.rate;
+  S.rate = value;
+  ACCT_RATE_KEYS.forEach(k => { if (S[k] === prev) S[k] = value; });
+  syncInputs();
+}
+
 function update(){ syncLabels(); render(); paceRender(); statePersist(); }
 
 Object.keys(FIELDS).concat(["seppct"]).forEach(key => {
   if (isIndexKey(key)) return;   // wired separately below — these sliders move over an index, not the raw value
   const el = $(key);
   if (!el) return;
-  el.addEventListener("input", e => { if (LOCKED.has(key)) return; S[key] = storedVal(key, parseFloat(e.target.value)); update(); });
+  el.addEventListener("input", e => { if (LOCKED.has(key)) return; assignRate(key, storedVal(key, parseFloat(e.target.value))); update(); });
 });
 
 const elecSlider = $("elec");
@@ -1971,7 +2012,7 @@ for (const key in FIELDS){
     if (LOCKED.has(key)) return;
     let v = parseBox();
     if (isNaN(v)) return;                 // let them keep typing
-    v = clamp(v); S[key] = storedVal(key, v);
+    v = clamp(v); assignRate(key, storedVal(key, v));
     syncSlider(v);
     update();                             // syncLabels skips the box being typed in
   });
@@ -1984,7 +2025,7 @@ for (const key in FIELDS){
       update();
       return;
     }
-    v = clamp(v); S[key] = storedVal(key, v);
+    v = clamp(v); assignRate(key, storedVal(key, v));
     syncSlider(v);
     update();
   });
@@ -2279,7 +2320,7 @@ function paceRender(){
   const v = $("pace-v"), note = $("pace-note"), k = $("pace-k");
   const apply = $("pace-apply");
   if (!v || !LOG) return;
-  const goal = S.rate;
+  const goal = S.r401;   // this window is measured from the 401(a) balance log
   k.textContent = `Pace Check — Current Balance Vs ${goal.toFixed(1)}% Goal`;
   const dates = fieldLogDates("bal");
 
@@ -2338,7 +2379,7 @@ function paceRender(){
      offer rather than an automatic swap: a few months of data is noise, and
      the rate drives every account, not just the one being measured. */
   if (!apply) return;
-  const rateRng = $("rate");
+  const rateRng = $("r401");
   const lo = rateRng ? +rateRng.min : 0, hi = rateRng ? +rateRng.max : 100;
   const target = rnd(Math.min(hi, Math.max(lo, realized)), 1);
   if (yrs < 60/365.25 || Math.abs(target - goal) < 0.1){ apply.hidden = true; return; }
@@ -2348,7 +2389,7 @@ function paceRender(){
   apply.innerHTML = `<button type="button" id="pace-apply-btn">Use ${target.toFixed(1)}% as my return (${span} of data${clamped})</button>`;
   $("pace-apply-btn").addEventListener("click", () => {
     if (LOCKED.has("rate")) return;
-    S.rate = target;
+    S.r401 = target;   // only the account it was measured from
     syncInputs(); update();
   });
 }
