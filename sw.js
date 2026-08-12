@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v44-dietz";
+const CACHE = "retirement-tracker-v45-persist-state";
 const ASSETS = [
   "./",
   "./index.html",
