@@ -1413,6 +1413,11 @@ function renderElectionPath(retireYearInt){
 function render(){
   const {snap, contribTotals, retireAge, retireMonth, retireYearInt} = project(S);
   const atRetire = snap[retireAge];
+  /* snap is keyed by age entering each year, which is a year short once the
+     birthday has passed: retiring in October 2043 was reading 61, not 62.
+     ageShownIn gives the age actually reached in the retirement month. */
+  const ageShownIn = y => Math.floor(ageAtYM(YOUR_BIRTH, y, retireMonth));
+  const retireAgeShown = ageShownIn(retireYearInt);
   if (!atRetire) return;
 
   renderElectionPath(retireYearInt);
@@ -1434,10 +1439,10 @@ function render(){
   acctEnd("v-brokend",  atRetire.brok,  false);
 
   $("m-year").textContent = retireYearInt;
-  $("m-age").textContent  = retireAge;
+  $("m-age").textContent  = retireAgeShown;
   $("m-ret").textContent  = S.rate.toFixed(1) + "%";
   const ageAtRetireHint = $("age-at-retire");
-  if (ageAtRetireHint) ageAtRetireHint.textContent = `(Age ${retireAge})`;
+  if (ageAtRetireHint) ageAtRetireHint.textContent = `(Age ${retireAgeShown})`;
   const yearsToRetire = Math.max(0, S.retire - BASE_YEAR);
   const heroYears = $("hero-years");
   if (heroYears) heroYears.textContent = `${yearsToRetire.toFixed(2)} Years Remaining`;
@@ -1446,12 +1451,12 @@ function render(){
   const totalContrib = Object.values(contribTotals).reduce((a,c)=>a+c,0);
   const growth = atRetire.total - totalContrib - S.bal;
   $("hl-note").textContent =
-    `Age ${retireAge} in ${MONTH_NAMES[retireMonth-1]} ${retireYearInt} · ${money(totalContrib)} contributed · ${money(Math.max(0,growth))} growth`;
+    `Age ${retireAgeShown} in ${MONTH_NAMES[retireMonth-1]} ${retireYearInt} · ${money(totalContrib)} contributed · ${money(Math.max(0,growth))} growth`;
 
   drawTerrain(snap, retireAge, atRetire);
   drawLegend(atRetire);
   drawIncome(atRetire, retireAge, retireMonth, retireYearInt);
-  drawTable(snap, retireAge);
+  drawTable(snap, retireAge, ageShownIn);
 }
 
 /* colour helpers: shade() lightens/darkens a hex colour, lerpColor() sweeps between two */
@@ -1801,13 +1806,15 @@ function drawIncome(a, retireAge, retireMonth, retireYearInt){
     `<div class="inc-c" data-tot="1"><div class="inc-k">Total / month</div><div class="inc-v">${money(total)}</div></div>`;
 }
 
-function drawTable(snap, retireAge){
+function drawTable(snap, retireAge, ageShownIn){
   const milestones = []; for (let a=61; a<=70; a++) milestones.push(a);
   const ages = [...new Set([retireAge, ...milestones])].filter(a => snap[a]).sort((x,y)=>x-y);
   $("tbody").innerHTML = ages.map(age => {
     const d = snap[age];
     const hl = age === retireAge ? ' data-hl="1"' : '';
-    return `<tr${hl} data-age="${age}"><td>${age} · ${d.year}</td>` +
+    // labelled on the same footing as the headline, so the retirement row agrees with it
+    const shown = ageShownIn ? ageShownIn(d.year) : age;
+    return `<tr${hl} data-age="${age}"><td>${shown} · ${d.year}</td>` +
       ACCOUNTS.map(m=>`<td class="num">${moneyK(d[m.k])}</td>`).join("") +
       `<td class="num">${moneyK(d.total)}</td></tr>`;
   }).join("");
@@ -1874,7 +1881,26 @@ function syncInputs(){
   $("seppct").value = S.seppct;
 }
 
-function update(){ syncLabels(); render(); paceRender(); }
+/* Every input was lost on reload: only named scenarios, logs and locks were
+   ever written down, so a retirement year or a return rate typed straight into
+   the app came back as the default next time. The working figures are now saved
+   as they change, debounced so dragging a slider does not write on every frame. */
+const STATE_KEY = "state:v1";
+let stateTimer = null;
+function statePersist(){
+  clearTimeout(stateTimer);
+  stateTimer = setTimeout(() => {
+    try { window.storage.set(STATE_KEY, JSON.stringify(S)); } catch {}
+  }, 250);
+}
+async function stateLoad(){
+  try {
+    const r = await window.storage.get(STATE_KEY);
+    if (r) S = Object.assign({}, DEFAULTS, JSON.parse(r.value));
+  } catch {}
+}
+
+function update(){ syncLabels(); render(); paceRender(); statePersist(); }
 
 Object.keys(FIELDS).concat(["seppct"]).forEach(key => {
   if (isIndexKey(key)) return;   // wired separately below — these sliders move over an index, not the raw value
@@ -2360,7 +2386,11 @@ async function fieldLogLoad(){
 async function fieldLogPersist(){ try { await window.storage.set(LOG_KEY, JSON.stringify(LOG)); } catch {} }
 
 async function fieldLogInit(){
+  /* Saved figures come back first, then the logs are laid over them, so a
+     logged balance still wins over whatever the field last held. */
+  await stateLoad();
   await fieldLogLoad();
+  syncInputs();
   fieldLogBuild();
   /* Adopt the newest logged balance on startup, not just when a log row is
      edited. Without this the projection opened against a stale Current Balance
