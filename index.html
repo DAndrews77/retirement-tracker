@@ -1165,6 +1165,7 @@ const DEFAULTS = {
   wm:150, wstep:150, rcap:8000, dbal:0, wbal:500, dm:0, dstep:0,
   sinc:100000, seppct:25, tax:33.3, drag:1.8,
   r401:12, rwroth:12, rdroth:12, rsep:12, rbrok:12,
+  r401prev:null,          // what the 401(a) return was before the measured rate was applied
   pen:5511, surv:0, ss67:3503, ssageYou:67.01, wss:1985, ssageSpouse:67.01
 };
 
@@ -2389,7 +2390,7 @@ function paceRender(){
   const rateRng = $("r401");
   const lo = rateRng ? +rateRng.min : 0, hi = rateRng ? +rateRng.max : 100;
   const target = rnd(Math.min(hi, Math.max(lo, realized)), 1);
-  if (yrs < 60/365.25 || Math.abs(target - goal) < 0.1){ hideApply(); return; }
+  if (yrs < 60/365.25){ hideApply(); return; }
   apply.hidden = false;
   // the span rides on the button itself, so a rate drawn from a few weeks cannot look authoritative
   const clamped = Math.abs(target - realized) > 0.05 ? `, capped at ${hi}%` : "";
@@ -2398,15 +2399,25 @@ function paceRender(){
      nothing, and let it write to a 401(a) return that was locked. */
   const rateKey = ACCT_RATES.p401;
   const locked = LOCKED.has(rateKey);
-  apply.innerHTML = `<button type="button" id="pace-apply-btn"${locked ? " disabled" : ""}>` +
-    (locked
-      ? `401(a) return is locked — unlock it to apply ${target.toFixed(1)}%`
-      : `Use ${target.toFixed(1)}% as my return (${span} of data${clamped})`) +
-    `</button>`;
+  /* Applying used to remove the offer, leaving no way back to the figure it
+     replaced. It toggles instead: once the measured rate is in place the button
+     offers the previous one, so the two can be compared. */
+  const applied = Math.abs(S[rateKey] - target) < 0.05;
+  const back = S.r401prev;
+  const canRevert = applied && typeof back === "number" && Math.abs(back - target) >= 0.05;
+  if (applied && !canRevert){ hideApply(); return; }
+
+  const label = locked
+    ? `401(a) return is locked — unlock it to ${canRevert ? "change it back" : "apply " + target.toFixed(1) + "%"}`
+    : canRevert
+      ? `Back to ${back.toFixed(1)}% (currently using the measured ${target.toFixed(1)}%)`
+      : `Use ${target.toFixed(1)}% as my return (${span} of data${clamped})`;
+  apply.innerHTML = `<button type="button" id="pace-apply-btn"${locked ? " disabled" : ""}>${label}</button>`;
   if (locked) return;   // never leave a button that looks live but is inert
   $("pace-apply-btn").addEventListener("click", () => {
     if (LOCKED.has(rateKey)) return;
-    S[rateKey] = target;   // only the account it was measured from
+    if (canRevert){ S[rateKey] = back; S.r401prev = null; }
+    else { S.r401prev = S[rateKey]; S[rateKey] = target; }
     syncInputs(); update();
   });
 }

@@ -1,4 +1,4 @@
-const CACHE = "retirement-tracker-v47-apply-lock-fix";
+const CACHE = "retirement-tracker-v48-rate-toggle";
 const ASSETS = [
   "./",
   "./index.html",
