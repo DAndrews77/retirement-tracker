@@ -126,7 +126,6 @@ body{
 }
 .elecpath button b{color:var(--accent);font-weight:600}
 .elecpath button.max{border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
-.elecpath button.now{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
 .elecpath .yr{opacity:.65;font-style:normal}
 .f-lock{
   display:inline-flex;align-items:center;justify-content:center;flex:none;
@@ -1250,8 +1249,11 @@ function renderElectionPath(retireYearInt){
     if (rate !== prev){ stops.push({ y, rate, atMax: idx >= MAX_CLASS }); prev = rate; }
     if (idx >= MAX_CLASS){ maxYear = y; break; }   // nothing moves once Class 12 is elected
   }
+  /* No stop is marked as "current": the path always begins at whatever is
+     elected today, so highlighting the first one said nothing and read as a
+     selection that would not clear. */
   el.innerHTML = stops.map(s =>
-    `<button type="button" class="${s.atMax ? "max " : ""}${s.y === BASE_YEAR ? "now" : ""}" data-rate="${s.rate}"` +
+    `<button type="button" class="${s.atMax ? "max" : ""}" data-rate="${s.rate}"` +
     ` aria-label="Elect $${s.rate} per hour now"><i class="yr">${s.y}</i><b>$${s.rate}</b>${s.atMax ? " max" : ""}</button>`
   ).join("");
 
@@ -1702,6 +1704,7 @@ const elecPath = $("elec-path");
 if (elecPath) elecPath.addEventListener("click", e => {
   const btn = e.target.closest("button[data-rate]");
   if (!btn || LOCKED.has("elec")) return;
+  btn.blur();   // otherwise the tapped stop keeps focus styling and looks stuck on
   S.elec = parseFloat(btn.dataset.rate);
   syncInputs(); update();
 });
@@ -2096,7 +2099,10 @@ async function fieldLogPersist(){ try { await window.storage.set(LOG_KEY, JSON.s
 async function fieldLogInit(){
   await fieldLogLoad();
   fieldLogBuild();
-  paceRender();
+  /* Adopt the newest logged balance on startup, not just when a log row is
+     edited. Without this the projection opened against a stale Current Balance
+     while the log sitting right above it already showed a newer figure. */
+  syncBalFromLatestLog();
   renderActivityLog();
 }
 
