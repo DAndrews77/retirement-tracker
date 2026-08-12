@@ -223,6 +223,11 @@ input[type=range]:focus-visible{outline:2px solid var(--dim);outline-offset:3px}
   -webkit-tap-highlight-color:transparent;transition:background .12s,border-color .12s;
 }
 .pace-apply button:hover,.pace-apply button:focus-visible{background:color-mix(in srgb,var(--accent) 22%,transparent);border-color:var(--accent);outline:none}
+.pace-apply button[disabled]{
+  color:var(--graphite-2);background:none;border-color:var(--rule);
+  cursor:not-allowed;opacity:.75;
+}
+.pace-apply button[disabled]:hover{background:none;border-color:var(--rule)}
 
 /* signature: dimension string */
 .dimwrap{padding:16px 18px 6px;background:var(--panel);
@@ -2319,6 +2324,8 @@ function drawGauge(status, delta){
 function paceRender(){
   const v = $("pace-v"), note = $("pace-note"), k = $("pace-k");
   const apply = $("pace-apply");
+  // clear as well as hide, so no stale button is left behind for a tap or a screen reader
+  const hideApply = () => { if (apply){ apply.hidden = true; apply.innerHTML = ""; } };
   if (!v || !LOG) return;
   const goal = S.r401;   // this window is measured from the 401(a) balance log
   k.textContent = `Pace Check — Current Balance Vs ${goal.toFixed(1)}% Goal`;
@@ -2330,7 +2337,7 @@ function paceRender(){
     note.textContent = dates.length === 1
       ? `Logged ${dates[0]} only — add one more entry of Current Balance to see your pace.`
       : "Log at least two entries of Current Balance (any dates) to see your pace.";
-    if (apply) apply.hidden = true;
+    hideApply();
     return;
   }
 
@@ -2342,7 +2349,7 @@ function paceRender(){
     v.textContent = "NO DATA"; v.className = "pace-v flat";
     drawGauge("none", 0);
     note.textContent = "Need a positive starting balance and two different dates to compute growth.";
-    if (apply) apply.hidden = true;
+    hideApply();
     return;
   }
 
@@ -2360,7 +2367,7 @@ function paceRender(){
     v.textContent = "NO DATA"; v.className = "pace-v flat";
     drawGauge("none", 0);
     note.textContent = `${money(b1)} to ${money(b2)} over ${yrs.toFixed(2)} yrs against ${money(paidIn)} contributed — not enough to measure a return yet.`;
-    if (apply) apply.hidden = true;
+    hideApply();
     return;
   }
   const realized = (Math.pow(1 + gain/invested, 1/yrs) - 1) * 100;
@@ -2382,14 +2389,24 @@ function paceRender(){
   const rateRng = $("r401");
   const lo = rateRng ? +rateRng.min : 0, hi = rateRng ? +rateRng.max : 100;
   const target = rnd(Math.min(hi, Math.max(lo, realized)), 1);
-  if (yrs < 60/365.25 || Math.abs(target - goal) < 0.1){ apply.hidden = true; return; }
+  if (yrs < 60/365.25 || Math.abs(target - goal) < 0.1){ hideApply(); return; }
   apply.hidden = false;
   // the span rides on the button itself, so a rate drawn from a few weeks cannot look authoritative
   const clamped = Math.abs(target - realized) > 0.05 ? `, capped at ${hi}%` : "";
-  apply.innerHTML = `<button type="button" id="pace-apply-btn">Use ${target.toFixed(1)}% as my return (${span} of data${clamped})</button>`;
+  /* The lock consulted has to be the one on the field being written. Checking
+     the overall rate's lock instead left the button looking live while doing
+     nothing, and let it write to a 401(a) return that was locked. */
+  const rateKey = ACCT_RATES.p401;
+  const locked = LOCKED.has(rateKey);
+  apply.innerHTML = `<button type="button" id="pace-apply-btn"${locked ? " disabled" : ""}>` +
+    (locked
+      ? `401(a) return is locked — unlock it to apply ${target.toFixed(1)}%`
+      : `Use ${target.toFixed(1)}% as my return (${span} of data${clamped})`) +
+    `</button>`;
+  if (locked) return;   // never leave a button that looks live but is inert
   $("pace-apply-btn").addEventListener("click", () => {
-    if (LOCKED.has("rate")) return;
-    S.r401 = target;   // only the account it was measured from
+    if (LOCKED.has(rateKey)) return;
+    S[rateKey] = target;   // only the account it was measured from
     syncInputs(); update();
   });
 }
