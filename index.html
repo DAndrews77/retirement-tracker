@@ -259,7 +259,8 @@ tfoot td{border-bottom:0;border-top:1.5px solid var(--graphite);font-weight:600}
 .activity-card{padding:15px 20px 18px;background:var(--panel);border:1px solid var(--rule);border-radius:10px}
 .activity-row{display:flex;align-items:center;gap:9px;padding:6px 0}
 .activity-row + .activity-row{border-top:1px solid var(--rule)}
-.activity-label{flex:1;font-size:11.5px;color:var(--graphite)}
+.activity-label{flex:1;min-width:0;font-size:11.5px;color:var(--graphite);display:flex;flex-direction:column;gap:1px}
+.activity-acct{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--graphite-2)}
 .activity-val{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--accent)}
 .inc-h{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--graphite-2);margin-bottom:11px}
 .inc-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:9px;background:transparent;border:0}
@@ -813,6 +814,14 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <input id="dbal" max="100000" min="0" step="any" type="range" value="0"/>
 </div>
 <div class="f">
+<div class="f-top"><span class="f-l">Contribution / Month</span><span class="f-v">$<input class="f-in" id="v-dm" inputmode="decimal" type="text"/></span></div>
+<input id="dm" max="700" min="0" step="any" type="range" value="0"/>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">July Step-Up</span><span class="f-v">$<input class="f-in" id="v-dstep" inputmode="decimal" type="text"/></span></div>
+<input id="dstep" max="400" min="0" step="any" type="range" value="0"/>
+</div>
+<div class="f">
 <div class="f-top"><span class="f-l">At Retirement</span><span class="f-v" id="v-drothend">$0</span></div>
 </div>
 <div class="f">
@@ -1040,7 +1049,7 @@ const ACCOUNTS = [
 const DEFAULTS = {
   retire:2042.04, rate:12, wd:4, hours:1959,
   bal:41166, elec:5, step:1, empr:1, xtra:2,
-  wm:150, wstep:150, rcap:8000, dbal:0, wbal:500,
+  wm:150, wstep:150, rcap:8000, dbal:0, wbal:500, dm:0, dstep:0,
   sinc:100000, seppct:25, tax:33.3, drag:1.8,
   pen:5511, surv:0, ss67:3503, ssageYou:67.01, wss:1985, ssageSpouse:67.01
 };
@@ -1156,6 +1165,18 @@ function project(s){
     return rate(1)*6 + rate(2)*6;
   };
 
+  /* Your own Roth contributions, on the same monthly + July step-up shape as the
+     spouse account. They sit alongside whatever the plan max redirects here, so
+     the account can be funded directly instead of only by overflow. */
+  const yourRaw = y => {
+    const rate = half => {
+      const steps = half === 2 ? (y - BASE_YEAR - 1) : (y - BASE_YEAR - 2);
+      return s.dm + s.dstep * Math.max(0, steps + 1);
+    };
+    if (y === BASE_YEAR) return 6 * s.dm;
+    return rate(1)*6 + rate(2)*6;
+  };
+
   let b = {p401:s.bal, wroth:s.wbal, droth:s.dbal, sep:0, brok:0};
   const snap = {};
   const contribTotals = {p401:0, wroth:0, droth:0, sep:0, brok:0};
@@ -1180,9 +1201,11 @@ function project(s){
     const rothLimit = a => a >= 50 ? s.rcap : s.rcap - 1000;
     const wRaw = working ? wifeRaw(y) * partial : 0;
     const wC   = Math.min(wRaw, rothLimit(spouseAge) * partial);
-    const dC   = Math.min(redirect, rothLimit(yourAge) * partial);
+    // direct contributions and redirected overflow share one annual limit
+    const dRaw = (working ? yourRaw(y) * partial : 0) + redirect;
+    const dC   = Math.min(dRaw, rothLimit(yourAge) * partial);
 
-    const overflow = Math.max(0, wRaw - wC) + Math.max(0, redirect - dC);
+    const overflow = Math.max(0, wRaw - wC) + Math.max(0, dRaw - dC);
     const sepC  = Math.min(overflow, sepCeiling * partial);
     const brokC = Math.max(0, overflow - sepC) * taxKeep;
 
@@ -1678,6 +1701,7 @@ const FIELDS = {
   bal:{dec:0, money:true}, elec:{dec:0, money:true}, step:{dec:0}, xtra:{dec:0, money:true},
   wm:{dec:0, money:true}, wstep:{dec:0, money:true}, rcap:{dec:0, money:true},
   dbal:{dec:0, money:true}, wbal:{dec:0, money:true},
+  dm:{dec:0, money:true}, dstep:{dec:0, money:true},
   sinc:{dec:0, money:true}, tax:{dec:1}, drag:{dec:1},
   pen:{dec:0, money:true}, surv:{dec:0}, ss67:{dec:0, money:true}, wss:{dec:0, money:true},
   ssageYou:{dec:2}, ssageSpouse:{dec:2}
@@ -1987,6 +2011,14 @@ function fieldLabel(key){
   return l ? l.textContent : key;
 }
 
+/* Which account a field belongs to. Field names alone stopped identifying a row
+   once Current Balance existed under the 401(a) and both Roth IRAs. */
+function fieldAccount(key){
+  const rng = $(key);
+  const head = rng && rng.closest(".grp")?.querySelector(".grp-h");
+  return head ? head.textContent.replace(/[▾▴]/g, "").trim() : "";
+}
+
 function renderActivityLog(){
   const list = document.getElementById("activity-list");
   if (!list) return;
@@ -1995,14 +2027,18 @@ function renderActivityLog(){
     const { prefix, suffix, dec } = fieldLogUnit(key);
     const isMoney = !!FIELDS[key].money;
     fieldLogDates(key).forEach(d => {
-      entries.push({ date: d, label: fieldLabel(key), value: LOG[key][d], prefix, suffix, dec, isMoney });
+      entries.push({ date: d, label: fieldLabel(key), account: fieldAccount(key),
+                     value: LOG[key][d], prefix, suffix, dec, isMoney });
     });
   });
   entries.sort((a, b) => b.date.localeCompare(a.date));
   list.innerHTML = entries.length
     ? entries.map(e => `<div class="activity-row">` +
         `<span class="f-logdate">${e.date}</span>` +
-        `<span class="activity-label">${e.label}</span>` +
+        `<span class="activity-label">` +
+          (e.account ? `<span class="activity-acct">${e.account}</span>` : "") +
+          `<span>${e.label}</span>` +
+        `</span>` +
         `<span class="activity-val">${e.prefix}${fmtBox(e.value, e.dec, e.isMoney)}${e.suffix}</span>` +
       `</div>`).join("")
     : `<div class="f-logempty">No activity logged yet — use "Log By Date" under any field to start tracking.</div>`;
