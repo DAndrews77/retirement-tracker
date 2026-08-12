@@ -115,12 +115,18 @@ body{
   margin-top:7px;display:flex;flex-wrap:wrap;gap:4px 6px;
   font-family:"IBM Plex Mono",monospace;font-size:10px;line-height:1.5;
 }
-.elecpath span{
-  display:inline-flex;gap:4px;padding:2px 6px;border-radius:999px;
+.elecpath button{
+  display:inline-flex;align-items:baseline;gap:4px;padding:3px 8px;border-radius:999px;
   border:1px solid var(--rule);color:var(--graphite-2);white-space:nowrap;
+  background:rgba(10,23,34,.5);font:inherit;cursor:pointer;
+  transition:border-color .12s,color .12s;
 }
-.elecpath span b{color:var(--accent);font-weight:600}
-.elecpath span.max{border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.elecpath button:hover,.elecpath button:focus-visible{
+  border-color:var(--accent);color:#E8F3F7;outline:none;
+}
+.elecpath button b{color:var(--accent);font-weight:600}
+.elecpath button.max{border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.elecpath button.now{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
 .elecpath .yr{opacity:.65;font-style:normal}
 .f-lock{
   display:inline-flex;align-items:center;justify-content:center;flex:none;
@@ -780,15 +786,19 @@ body.drawer-open .drawer-backdrop{opacity:1;pointer-events:auto}
 <input id="bal" max="150000" min="0" step="any" type="range" value="41166"/>
 </div>
 <div class="f">
-<div class="f-top"><span class="f-l">Elective Rate Now</span><span class="f-v">$<input class="f-in" id="v-elec" inputmode="numeric" type="text"/>/hr</span></div>
-<input id="elec" max="15" min="0" step="1" type="range" value="5"/>
+<div class="f-top"><span class="f-l">Elective Rate Now</span><span class="f-v-wrap"><span class="f-v">$<input class="f-in" id="v-elec" inputmode="numeric" type="text"/>/hr</span><span class="f-hint" id="elec-class"></span></span></div>
+<input id="elec" max="12" min="0" step="1" type="range" value="6"/>
 </div>
 <div class="f">
-<div class="f-top"><span class="f-l">Step-Up Each July</span><span class="f-v">$<input class="f-in" id="v-step" inputmode="numeric" type="text"/>/hr</span></div>
-<input id="step" max="4" min="0" step="1" type="range" value="2"/>
+<div class="f-top"><span class="f-l">Classes Up Each July</span><span class="f-v-wrap"><span class="f-v"><input class="f-in" id="v-step" inputmode="numeric" type="text"/></span><span class="f-hint" id="step-hint"></span></span></div>
+<input id="step" max="3" min="0" step="1" type="range" value="1"/>
 </div>
 <div class="f">
 <div class="f-top"><span class="f-l">Employer Contribution</span><span class="f-v" id="v-empr">$1.00/hr</span></div>
+</div>
+<div class="f">
+<div class="f-top"><span class="f-l">Extra Saved Each July</span><span class="f-v-wrap"><span class="f-v">$<input class="f-in" id="v-xtra" inputmode="numeric" type="text"/>/hr</span><span class="f-hint" id="xtra-hint"></span></span></div>
+<input id="xtra" max="10" min="0" step="1" type="range" value="2"/>
 </div>
 <div class="f">
 <div class="f-top"><span class="f-l">Election Path</span></div>
@@ -980,10 +990,16 @@ const CAP_CEILING = 15;
    waterfall - which is what happens in practice, since the form has no box for
    the in-between amount. */
 const CLASS_RUNGS = [0, 0.5, 1, 2, 3, 4, 5, 7, 9, 11, 12, 14, 15];
+const MAX_CLASS = CLASS_RUNGS.length - 1;                 // Class 12 = the $15 plan max
 const electableRate = v => {
   let rung = CLASS_RUNGS[0];
   for (const r of CLASS_RUNGS) if (r <= v + 1e-9) rung = r;
   return rung;
+};
+const classIndexOf = v => {
+  let i = 0;
+  CLASS_RUNGS.forEach((r, k) => { if (r <= v + 1e-9) i = k; });
+  return i;
 };
 
 /* Real birthdates, month precision (matches the year.month convention used for
@@ -1005,7 +1021,7 @@ const ACCOUNTS = [
 
 const DEFAULTS = {
   retire:2042.04, rate:12, wd:4, hours:1959,
-  bal:41166, elec:5, step:2, empr:1,
+  bal:41166, elec:5, step:1, empr:1, xtra:2,
   wm:150, wstep:150, rcap:8000,
   sinc:100000, seppct:25, tax:33.3, drag:1.8,
   pen:5511, surv:0, ss67:3503, ssageYou:67.01, wss:1985, ssageSpouse:67.01
@@ -1087,11 +1103,28 @@ function project(s){
   const sepCeiling = s.sinc * (s.seppct/100);
   const taxKeep = 1 - s.tax/100;
 
-  // uncapped elective rate for a given year+half
-  const uncapped = (y, half) => {
-    if (y === BASE_YEAR && half === 1) return Math.max(0, s.elec - s.step);
-    const steps = half === 2 ? (y - BASE_YEAR) : (y - 1 - BASE_YEAR);
-    return s.elec + s.step * steps;
+  /* The election climbs the classification ladder by s.step CLASSES each July
+     and stops at Class 12. Stepping by classes rather than dollars is what
+     makes it move every July: the rungs are unevenly spaced, so a fixed dollar
+     increase would stall in the years its target falls between them. */
+  const startClass = classIndexOf(s.elec);
+  const electedAt = (y, half) => {
+    if (y === BASE_YEAR && half === 1) return CLASS_RUNGS[Math.max(0, startClass - s.step)];
+    const julys = half === 2 ? (y - BASE_YEAR) : (y - 1 - BASE_YEAR);
+    return CLASS_RUNGS[Math.min(MAX_CLASS, startClass + s.step * Math.max(0, julys))];
+  };
+
+  /* Once the plan is maxed there is nowhere left to climb, so continued saving
+     has to go somewhere else. s.xtra is how much more per hour gets put aside
+     each July after that point, and it feeds the Roth/SEP/brokerage waterfall. */
+  let maxedJuly = null;
+  for (let y = BASE_YEAR; y <= endYear; y++) {
+    if (electedAt(y, 2) >= CAP_CEILING) { maxedJuly = y; break; }
+  }
+  const extraAt = (y, half) => {
+    if (maxedJuly === null || !s.xtra) return 0;
+    const julys = half === 2 ? (y - maxedJuly) : (y - 1 - maxedJuly);
+    return Math.max(0, julys) * s.xtra;
   };
 
   // spouse Roth uncapped calendar contribution
@@ -1119,10 +1152,9 @@ function project(s){
       const halves = (y === retireYearInt) ? [1] : [1,2];
       for (const hf of halves){
         const hrs = (y === retireYearInt) ? H*partial : halfH;
-        const u = uncapped(y, hf);
-        const elect = electableRate(Math.min(u, CAP_CEILING));
+        const elect = electedAt(y, hf);
         c401 += (elect + s.empr) * hrs;
-        redirect += Math.max(0, u - elect) * hrs;
+        redirect += extraAt(y, hf) * hrs;
       }
     }
 
@@ -1209,19 +1241,24 @@ function ssFactor(v, key){
 function renderElectionPath(retireYearInt){
   const el = $("elec-path");
   if (!el) return;
+  const start = classIndexOf(S.elec);
   const stops = [];
-  let prev = null;
+  let prev = null, maxYear = null;
   for (let y = BASE_YEAR; y <= retireYearInt; y++){
-    const rate = electableRate(Math.min(S.elec + S.step * (y - BASE_YEAR), CAP_CEILING));
-    if (rate === prev) continue;
-    const atMax = rate >= CAP_CEILING;
-    stops.push({ y, rate, atMax });
-    prev = rate;
-    if (atMax) break;                    // nothing moves once the plan max is elected
+    const idx = Math.min(MAX_CLASS, start + S.step * (y - BASE_YEAR));
+    const rate = CLASS_RUNGS[idx];
+    if (rate !== prev){ stops.push({ y, rate, atMax: idx >= MAX_CLASS }); prev = rate; }
+    if (idx >= MAX_CLASS){ maxYear = y; break; }   // nothing moves once Class 12 is elected
   }
   el.innerHTML = stops.map(s =>
-    `<span class="${s.atMax ? "max" : ""}"><i class="yr">${s.y}</i><b>$${s.rate}</b>${s.atMax ? " max" : ""}</span>`
+    `<button type="button" class="${s.atMax ? "max " : ""}${s.y === BASE_YEAR ? "now" : ""}" data-rate="${s.rate}"` +
+    ` aria-label="Elect $${s.rate} per hour now"><i class="yr">${s.y}</i><b>$${s.rate}</b>${s.atMax ? " max" : ""}</button>`
   ).join("");
+
+  const setHint = (id, text) => { const h = $(id); if (h) h.textContent = text; };
+  setHint("elec-class", `Class ${start}`);
+  setHint("step-hint", maxYear ? `maxes ${maxYear}` : "never maxes");
+  setHint("xtra-hint", maxYear && S.xtra ? `from ${maxYear + 1}` : "—");
 }
 
 function render(){
@@ -1589,7 +1626,7 @@ function drawTable(snap, retireAge){
 const FIELDS = {
   retire:{dec:2},
   rate:{dec:1}, wd:{dec:2}, hours:{dec:0},
-  bal:{dec:0, money:true}, elec:{dec:0, money:true}, step:{dec:0, money:true},
+  bal:{dec:0, money:true}, elec:{dec:0, money:true}, step:{dec:0}, xtra:{dec:0, money:true},
   wm:{dec:0, money:true}, wstep:{dec:0, money:true}, rcap:{dec:0, money:true},
   sinc:{dec:0, money:true}, tax:{dec:1}, drag:{dec:1},
   pen:{dec:0, money:true}, surv:{dec:0}, ss67:{dec:0, money:true}, wss:{dec:0, money:true},
@@ -1627,13 +1664,16 @@ function syncLabels(){
 }
 
 const YM_INDEX_KEYS = ["retire", "ssageYou", "ssageSpouse"];   // sliders that move over a constrained index
+const CLASS_INDEX_KEYS = ["elec"];   // this slider moves over the class ladder, not the dollar rate
+const isIndexKey = k => YM_INDEX_KEYS.includes(k) || CLASS_INDEX_KEYS.includes(k);
 
 function syncInputs(){
   for (const key in FIELDS){
-    if (YM_INDEX_KEYS.includes(key)) continue;
+    if (isIndexKey(key)) continue;
     const el = $(key);
     if (el) el.value = shownVal(key);
   }
+  if ($("elec")) $("elec").value = classIndexOf(S.elec);
   if (retireSlider) retireSlider.value = retireIndexOf(S.retire);
   if ($("ssageYou")) $("ssageYou").value = ssAgeIndexOf(S.ssageYou);
   if ($("ssageSpouse")) $("ssageSpouse").value = ssAgeIndexOf(S.ssageSpouse);
@@ -1643,10 +1683,27 @@ function syncInputs(){
 function update(){ syncLabels(); render(); paceRender(); }
 
 Object.keys(FIELDS).concat(["seppct"]).forEach(key => {
-  if (YM_INDEX_KEYS.includes(key)) return;   // wired separately below — these sliders move over an index, not the raw value
+  if (isIndexKey(key)) return;   // wired separately below — these sliders move over an index, not the raw value
   const el = $(key);
   if (!el) return;
   el.addEventListener("input", e => { if (LOCKED.has(key)) return; S[key] = storedVal(key, parseFloat(e.target.value)); update(); });
+});
+
+const elecSlider = $("elec");
+if (elecSlider) elecSlider.addEventListener("input", e => {
+  if (LOCKED.has("elec")) return;
+  const idx = Math.max(0, Math.min(MAX_CLASS, Math.round(parseFloat(e.target.value))));
+  S.elec = CLASS_RUNGS[idx];
+  update();
+});
+
+/* tapping a stop on the path elects that class straight away */
+const elecPath = $("elec-path");
+if (elecPath) elecPath.addEventListener("click", e => {
+  const btn = e.target.closest("button[data-rate]");
+  if (!btn || LOCKED.has("elec")) return;
+  S.elec = parseFloat(btn.dataset.rate);
+  syncInputs(); update();
 });
 
 const retireSlider = $("retire");
@@ -1669,6 +1726,7 @@ for (const key in FIELDS){
   if (!box) continue;
   const isRetire = key === "retire";
   const isSSAge = key === "ssageYou" || key === "ssageSpouse";
+  const isElec = key === "elec";
   const clamp = v => {
     if (isRetire){
       const { year, month } = decodeRetireYM(v);
@@ -1678,11 +1736,16 @@ for (const key in FIELDS){
       const { year, month } = decodeSSAgeYM(v);
       return ssAgeValue(year, month);
     }
+    // a typed rate settles on the class at or below it, since nothing between rungs is electable
+    if (isElec) return electableRate(Math.min(CAP_CEILING, Math.max(0, v)));
     if (rng){ const mn = +rng.min, mx = +rng.max; v = Math.min(mx, Math.max(mn, v)); }
     return rnd(v, FIELDS[key].dec);
   };
   const parseBox = () => parseFloat(box.value.replace(/,/g, ""));
-  const syncSlider = v => { if (rng) rng.value = isRetire ? retireIndexOf(v) : (isSSAge ? ssAgeIndexOf(v) : v); };
+  const syncSlider = v => {
+    if (!rng) return;
+    rng.value = isRetire ? retireIndexOf(v) : isSSAge ? ssAgeIndexOf(v) : isElec ? classIndexOf(v) : v;
+  };
   box.addEventListener("input", () => {
     if (LOCKED.has(key)) return;
     let v = parseBox();
@@ -1754,9 +1817,12 @@ async function loadScenario(name){
     const r = await window.storage.get("scenario:" + name);
     if (!r) { say("That scenario is missing."); return; }
     S = Object.assign({}, DEFAULTS, JSON.parse(r.value));
-    // scenarios saved before the rates became whole-dollar can hold e.g. 5.5,
-    // which the box would round for display while the projection kept the cents
-    S.elec = Math.round(S.elec); S.step = Math.round(S.step);
+    /* Older scenarios can hold a rate between rungs, and a step-up that was
+       measured in dollars back when it meant something different, so both are
+       brought onto the ladder's terms before anything is drawn. */
+    S.elec = electableRate(Math.min(CAP_CEILING, Math.max(0, S.elec)));
+    S.step = Math.max(0, Math.min(3, Math.round(S.step)));
+    S.xtra = Math.max(0, Math.round(S.xtra ?? DEFAULTS.xtra));
     syncInputs(); update();
     say(`Loaded "${name}".`);
   } catch { say("Could not load that scenario."); }
